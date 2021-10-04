@@ -553,6 +553,7 @@
 %%------------------------------------------------------------------------------
 
 -define(CODE_ACTION_KIND_QUICKFIX, <<"quickfix">>).
+-define(CODE_ACTION_KIND_REFACTOR, <<"refactor">>).
 -type code_action_kind() :: binary().
 
 -type code_action_context() :: #{ diagnostics := [els_diagnostics:diagnostic()]

@@ -30,6 +30,7 @@ options() ->
                  , els_command:with_prefix(<<"show-behaviour-usages">>)
                  , els_command:with_prefix(<<"suggest-spec">>)
                  , els_command:with_prefix(<<"function-references">>)
+                 , els_command:with_prefix(<<"code_action_do_something">>)
                  ] }.
 
 -spec handle_request(any(), state()) -> {any(), state()}.
@@ -45,17 +46,23 @@ handle_request({workspace_executecommand, Params}, State) ->
 %%==============================================================================
 
 -spec execute_command(els_command:command_id(), [any()]) -> [map()].
-execute_command(<<"replace-lines">>
+execute_command(<<"code_action_do_something">>
                , [#{ <<"uri">>   := Uri
-                   , <<"lines">> := Lines
                    , <<"from">>  := LineFrom
                    , <<"to">>    := LineTo }]) ->
-  Method = <<"workspace/applyEdit">>,
-  Params = #{ edit =>
-                  els_text_edit:edit_replace_text(Uri, Lines, LineFrom, LineTo)
-            },
-  els_server:send_request(Method, Params),
+  els_server:send_notification(<<"window/showMessage">>,
+    #{ type => ?MESSAGE_TYPE_INFO,
+        message => <<"Doing something">>
+      }),
+  ?LOG_INFO("code_action_do_something: ~p, ~p, ~p", [Uri, LineFrom, LineTo]),
   [];
+% execute_command(<<"rename-fun">>, [Uri, POI]) ->
+%   ?LOG_INFO("rename fun: ~p, ~p", [Uri, POI]),
+%   els_server:send_notification(<<"window/showMessage">>,
+%                                #{ type => ?MESSAGE_TYPE_INFO,
+%                                   message => <<"OK">>
+%                                 }),
+%   [];
 execute_command(<<"server-info">>, _Arguments) ->
   {ok, Version} = application:get_key(?APP, vsn),
   BinVersion = list_to_binary(Version),

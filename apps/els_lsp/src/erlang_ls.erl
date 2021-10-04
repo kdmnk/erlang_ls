@@ -19,13 +19,15 @@ main(Args) ->
   application:load(getopt),
   application:load(els_core),
   application:load(?APP),
+  ok = application:load(wrangler),
   ok = parse_args(Args),
   application:set_env(els_core, server, els_server),
   configure_logging(),
   {ok, _} = application:ensure_all_started(?APP),
   patch_logging(),
   configure_client_logging(),
-  ?LOG_INFO("Started erlang_ls server", []),
+  ok = api_wrangler:start(),
+  ?LOG_INFO("Started wrangler server", []),
   receive _ -> ok end.
 
 -spec print_version() -> ok.
