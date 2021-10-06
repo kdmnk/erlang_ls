@@ -2,7 +2,7 @@
 %% Code Lens: server_info
 %%==============================================================================
 
--module(els_code_lens_server_info).
+-module(els_code_lens_rename_mod).
 
 -behaviour(els_code_lens).
 -export([ command/3
@@ -14,22 +14,23 @@
 
 -spec command(els_dt_document:item(), poi(), els_code_lens:state()) ->
         els_command:command().
-command(_Document, _POI, _State) ->
+command(Document, _POI, _State) ->
   Title = title(),
-  CommandId = <<"server-info">>,
-  CommandArgs = [],
+  CommandId = <<"rename-mod">>,
+  #{uri := Uri} = Document,
+  M = els_uri:module(Uri),
+  P = els_uri:path(Uri),
+  CommandArgs = [M, P],
   els_command:make_command(Title, CommandId, CommandArgs).
 
 -spec is_default() -> boolean().
 is_default() ->
-  false.
+  true.
 
 -spec pois(els_dt_document:item()) -> [poi()].
-pois(_Document) ->
-  %% Return a dummy POI on the first line
-  [els_poi:new(#{from => {1, 1}, to => {2, 1}}, dummy, dummy)].
+pois(Document) ->
+  els_dt_document:pois(Document, [module]).
 
 -spec title() -> binary().
 title() ->
-  Root = filename:basename(els_uri:path(els_config:get(root_uri))),
-  <<"Erlang LS (in ", Root/binary, ") info">>.
+  <<"Wrangler: rename module">>.

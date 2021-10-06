@@ -57,7 +57,7 @@
 -spec available_lenses() -> [lens_id()].
 available_lenses() ->
   [ <<"ct-run-test">>
-  , <<"server-info">>
+  , <<"rename-mod">>
   , <<"show-behaviour-usages">>
   , <<"suggest-spec">>
   , <<"function-references">>
