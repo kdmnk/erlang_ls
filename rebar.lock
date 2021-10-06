@@ -14,6 +14,10 @@
  {<<"redbug">>,{pkg,<<"redbug">>,<<"2.0.6">>},0},
  {<<"tdiff">>,{pkg,<<"tdiff">>,<<"0.1.2">>},0},
  {<<"uuid">>,{pkg,<<"uuid_erl">>,<<"2.0.1">>},0},
+ {<<"wrangler">>,
+  {git,"https://github.com/kdmnk/wrangler.git",
+       {ref,"95db63d8d3d3ed01cc2bc0067c88fd6347dc3ef6"}},
+  0},
  {<<"yamerl">>,{pkg,<<"yamerl">>,<<"0.8.1">>},0},
  {<<"zipper">>,{pkg,<<"zipper">>,<<"1.0.1">>},1}]}.
 [
