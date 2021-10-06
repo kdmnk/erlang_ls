@@ -2,7 +2,7 @@
 %% Code Lens: server_info
 %%==============================================================================
 
--module(els_code_lens_rename_mod).
+-module(els_code_lens_rename_fun).
 
 -behaviour(els_code_lens).
 -export([ command/3
@@ -14,13 +14,14 @@
 
 -spec command(els_dt_document:item(), poi(), els_code_lens:state()) ->
         els_command:command().
-command(Document, _POI, _State) ->
+command(Document, POI, _State) ->
   Title = title(),
-  CommandId = <<"rename-mod">>,
+  CommandId = <<"rename-fun">>,
   #{uri := Uri} = Document,
   M = els_uri:module(Uri),
   P = els_uri:path(Uri),
-  CommandArgs = [M, P],
+  #{id := {F, A}} = POI,
+  CommandArgs = [M, F, A, P],
   els_command:make_command(Title, CommandId, CommandArgs).
 
 -spec is_default() -> boolean().
@@ -29,8 +30,8 @@ is_default() ->
 
 -spec pois(els_dt_document:item()) -> [poi()].
 pois(Document) ->
-  els_dt_document:pois(Document, [module]).
+  els_dt_document:pois(Document, [function]).
 
 -spec title() -> binary().
 title() ->
-  <<"Wrangler: rename module">>.
+  <<"Wrangler: rename function">>.

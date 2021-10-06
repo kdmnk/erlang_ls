@@ -25,7 +25,7 @@ is_enabled() -> true.
 -spec options() -> map().
 options() ->
   #{ commands => [ els_command:with_prefix(<<"replace-lines">>)
-                 , els_command:with_prefix(<<"rename-mod">>)
+                 , els_command:with_prefix(<<"rename-fun">>)
                  , els_command:with_prefix(<<"ct-run-test">>)
                  , els_command:with_prefix(<<"show-behaviour-usages">>)
                  , els_command:with_prefix(<<"suggest-spec">>)
@@ -56,17 +56,10 @@ execute_command(<<"code_action_do_something">>
       }),
   ?LOG_INFO("code_action_do_something: ~p, ~p, ~p", [Uri, LineFrom, LineTo]),
   [];
-% execute_command(<<"rename-fun">>, [Uri, POI]) ->
-%   ?LOG_INFO("rename fun: ~p, ~p", [Uri, POI]),
-%   els_server:send_notification(<<"window/showMessage">>,
-%                                #{ type => ?MESSAGE_TYPE_INFO,
-%                                   message => <<"OK">>
-%                                 }),
-%   [];
-execute_command(<<"rename-mod">>, [Module, Path]) ->
+execute_command(<<"rename-fun">>, [Module, Function, Arity, Path]) ->
   {module, _Module} = code:ensure_loaded(api_wrangler),
-  _Result = api_wrangler:rename_mod(binary_to_atom(Module), newmodule, [binary_to_list(Path)]),  
-  ?LOG_INFO("Rename mod result: ~p, ~p", [Module, Path]),
+  ?LOG_INFO("Renaming fun... (~p, ~p, ~p, ~p)", [Module, Function, Arity, Path]),
+  spawn(api_wrangler, rename_fun, [binary_to_atom(Module), binary_to_atom(Function), Arity, newfun, [binary_to_list(Path)]]),
   els_server:send_notification(<<"window/showMessage">>,
                                #{ type => ?MESSAGE_TYPE_INFO,
                                   message => <<"Hello">>
