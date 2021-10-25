@@ -16,7 +16,7 @@
  {<<"uuid">>,{pkg,<<"uuid_erl">>,<<"2.0.1">>},0},
  {<<"wrangler">>,
   {git,"https://github.com/kdmnk/wrangler.git",
-       {ref,"26356c0235912df92af926b23fd7430824f50f64"}},
+       {ref,"4ed9552f622e50fd811835192f4c18ac4e50c72a"}},
   0},
  {<<"yamerl">>,{pkg,<<"yamerl">>,<<"0.8.1">>},0},
  {<<"zipper">>,{pkg,<<"zipper">>,<<"1.0.1">>},1}]}.
