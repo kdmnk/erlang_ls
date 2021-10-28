@@ -39,9 +39,6 @@
         , document_highlight/3
         , document_codeaction/3
         , document_codelens/1
-        , document_formatting/3
-        , document_rangeformatting/3
-        , document_ontypeformatting/4
         , document_rename/4
         , folding_range/1
         , shutdown/0
@@ -49,9 +46,6 @@
         , stop/0
         , workspace_symbol/1
         , workspace_executecommand/2
-        , preparecallhierarchy/3
-        , callhierarchy_incomingcalls/1
-        , callhierarchy_outgoingcalls/1
         , get_notifications/0
         ]).
 
@@ -149,26 +143,6 @@ document_codeaction(Uri, Range, Diagnostics) ->
 document_codelens(Uri) ->
   gen_server:call(?SERVER, {document_codelens, {Uri}}).
 
--spec document_formatting(uri(), non_neg_integer(), boolean()) ->
-  ok.
-document_formatting(Uri, TabSize, InsertSpaces) ->
-  gen_server:call(?SERVER, {document_formatting, {Uri, TabSize, InsertSpaces}}).
-
--spec document_rangeformatting(uri(), range(), formatting_options()) ->
-  ok.
-document_rangeformatting(Uri, Range, FormattingOptions) ->
-  gen_server:call(?SERVER, {document_rangeformatting,
-                            {Uri, Range, FormattingOptions}}).
-
--spec document_ontypeformatting(uri(), position(), string()
-                               , formatting_options()) ->
-  ok.
-document_ontypeformatting(Uri, Position, Char, FormattingOptions) ->
-  gen_server:call(?SERVER, {document_ontypeformatting,
-                            {Uri, Position, Char, FormattingOptions}}).
-
--spec document_rename(uri(), non_neg_integer(), non_neg_integer(), binary()) ->
-        ok.
 document_rename(Uri, Line, Character, NewName) ->
   gen_server:call(?SERVER, {rename, {Uri, Line, Character, NewName}}).
 
@@ -230,21 +204,6 @@ workspace_symbol(Query) ->
   ok.
 workspace_executecommand(Command, Args) ->
   gen_server:call(?SERVER, {workspace_executecommand, {Command, Args}}).
-
--spec preparecallhierarchy(uri(), non_neg_integer(), non_neg_integer()) -> ok.
-preparecallhierarchy(Uri, Line, Char) ->
-  Args = {Uri, Line, Char},
-  gen_server:call(?SERVER, {preparecallhierarchy, Args}).
-
--spec callhierarchy_incomingcalls(els_call_hierarchy_item:item()) -> ok.
-callhierarchy_incomingcalls(Item) ->
-  Args = {Item},
-  gen_server:call(?SERVER, {callhierarchy_incomingcalls, Args}).
-
--spec callhierarchy_outgoingcalls(els_call_hierarchy_item:item()) -> ok.
-callhierarchy_outgoingcalls(Item) ->
-  Args = {Item},
-  gen_server:call(?SERVER, {callhierarchy_outgoingcalls, Args}).
 
 -spec get_notifications() -> [any()].
 get_notifications() ->
@@ -407,9 +366,6 @@ method_lookup(references)               -> <<"textDocument/references">>;
 method_lookup(document_highlight)       -> <<"textDocument/documentHighlight">>;
 method_lookup(document_codeaction)      -> <<"textDocument/codeAction">>;
 method_lookup(document_codelens)        -> <<"textDocument/codeLens">>;
-method_lookup(document_formatting)      -> <<"textDocument/formatting">>;
-method_lookup(document_rangeformatting) -> <<"textDocument/rangeFormatting">>;
-method_lookup(document_ontypeormatting) -> <<"textDocument/onTypeFormatting">>;
 method_lookup(rename)                   -> <<"textDocument/rename">>;
 method_lookup(did_open)                 -> <<"textDocument/didOpen">>;
 method_lookup(did_save)                 -> <<"textDocument/didSave">>;
@@ -417,9 +373,6 @@ method_lookup(did_close)                -> <<"textDocument/didClose">>;
 method_lookup(hover)                    -> <<"textDocument/hover">>;
 method_lookup(implementation)           -> <<"textDocument/implementation">>;
 method_lookup(folding_range)            -> <<"textDocument/foldingRange">>;
-method_lookup(preparecallhierarchy) -> <<"textDocument/prepareCallHierarchy">>;
-method_lookup(callhierarchy_incomingcalls) -> <<"callHierarchy/incomingCalls">>;
-method_lookup(callhierarchy_outgoingcalls) -> <<"callHierarchy/outgoingCalls">>;
 method_lookup(workspace_symbol)         -> <<"workspace/symbol">>;
 method_lookup(workspace_executecommand) -> <<"workspace/executeCommand">>;
 method_lookup(initialize)               -> <<"initialize">>;
@@ -464,13 +417,6 @@ request_params({ document_codeaction, {Uri, Range, Diagnostics}}) ->
    };
 request_params({ document_codelens, {Uri}}) ->
   #{ textDocument => #{ uri => Uri }};
-request_params({ document_formatting
-               , {Uri, TabSize, InsertSpaces}}) ->
-  #{ textDocument => #{ uri => Uri }
-   , options      => #{ tabSize      => TabSize
-                      , insertSpaces => InsertSpaces
-                      }
-   };
 request_params({rename, {Uri, Line, Character, NewName}}) ->
   #{ textDocument => #{ uri => Uri }
    , position     => #{ line      => Line
@@ -481,10 +427,6 @@ request_params({rename, {Uri, Line, Character, NewName}}) ->
 request_params({folding_range, {Uri}}) ->
   TextDocument = #{ uri => Uri },
   #{ textDocument => TextDocument };
-request_params({callhierarchy_incomingcalls, {Item}}) ->
-  #{item => Item};
-request_params({callhierarchy_outgoingcalls, {Item}}) ->
-  #{item => Item};
 request_params({_Action, {Uri, Line, Char}}) ->
   #{ textDocument => #{ uri => Uri }
    , position     => #{ line      => Line - 1

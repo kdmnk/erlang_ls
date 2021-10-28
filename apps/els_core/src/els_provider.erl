@@ -130,7 +130,6 @@ available_providers() ->
   , els_code_lens_provider
   , els_execute_command_provider
   , els_rename_provider
-  , els_call_hierarchy_provider
   ].
 
 -spec enabled_providers() -> [provider()].
