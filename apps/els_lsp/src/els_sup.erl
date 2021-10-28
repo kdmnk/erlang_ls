@@ -70,9 +70,6 @@ init([]) ->
                , #{ id       => els_snippets_server
                   , start    => {els_snippets_server, start_link, []}
                   }
-               , #{ id => els_bsp_client
-                  , start => {els_bsp_client, start_link, []}
-                  }
                , #{ id => els_index_buffer
                   , start => {els_index_buffer, start, []}
                   }
