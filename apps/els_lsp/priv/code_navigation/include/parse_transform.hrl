@@ -1,1 +1,0 @@
--compile({parse_transform, diagnostics_parse_transform}).
