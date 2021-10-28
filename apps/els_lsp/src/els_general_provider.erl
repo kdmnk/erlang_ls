@@ -124,8 +124,6 @@ server_capabilities() ->
             els_definition_provider:is_enabled()
         , referencesProvider =>
             els_references_provider:is_enabled()
-        , documentHighlightProvider =>
-            els_document_highlight_provider:is_enabled()
         , documentSymbolProvider =>
             els_document_symbol_provider:is_enabled()
         , workspaceSymbolProvider =>

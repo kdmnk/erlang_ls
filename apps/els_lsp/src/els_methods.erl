@@ -18,7 +18,6 @@
         , textdocument_definition/2
         , textdocument_implementation/2
         , textdocument_references/2
-        , textdocument_documenthighlight/2
         , textdocument_foldingrange/2
         , workspace_didchangeconfiguration/2
         , textdocument_codeaction/2
@@ -269,17 +268,6 @@ textdocument_definition(Params, State) ->
 textdocument_references(Params, State) ->
   Provider = els_references_provider,
   Response = els_provider:handle_request(Provider, {references, Params}),
-  {response, Response, State}.
-
-%%==============================================================================
-%% textDocument/documentHightlight
-%%==============================================================================
-
--spec textdocument_documenthighlight(params(), state()) -> result().
-textdocument_documenthighlight(Params, State) ->
-  Provider = els_document_highlight_provider,
-  Response = els_provider:handle_request(Provider,
-                                         {document_highlight, Params}),
   {response, Response, State}.
 
 %%==============================================================================

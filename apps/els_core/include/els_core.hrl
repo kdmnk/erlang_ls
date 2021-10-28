@@ -229,18 +229,6 @@
                            , value := binary()
                            }.
 
-%%------------------------------------------------------------------------------
-%% Document Highlight Kind
-%%------------------------------------------------------------------------------
-
--define(DOCUMENT_HIGHLIGHT_KIND_TEXT,  1).
--define(DOCUMENT_HIGHLIGHT_KIND_READ,  2).
--define(DOCUMENT_HIGHLIGHT_KIND_WRITE, 3).
-
--type document_highlight_kind() :: ?DOCUMENT_HIGHLIGHT_KIND_TEXT
-                                 | ?DOCUMENT_HIGHLIGHT_KIND_READ
-                                 | ?DOCUMENT_HIGHLIGHT_KIND_WRITE.
-
 %%==============================================================================
 %% Actual Protocol
 %%==============================================================================
@@ -372,9 +360,6 @@
                    }
               }
          , references =>
-             #{ dynamicRegistration => boolean()
-              }
-         , documentHighlight =>
              #{ dynamicRegistration => boolean()
               }
          , documentSymbol =>

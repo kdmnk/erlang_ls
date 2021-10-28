@@ -36,7 +36,6 @@
         , initialize/2
         , initialized/0
         , references/3
-        , document_highlight/3
         , document_codeaction/3
         , document_codelens/1
         , document_rename/4
@@ -130,10 +129,6 @@ implementation(Uri, Line, Char) ->
 -spec references(uri(), non_neg_integer(), non_neg_integer()) -> ok.
 references(Uri, Line, Char) ->
   gen_server:call(?SERVER, {references, {Uri, Line, Char}}).
-
--spec document_highlight(uri(), non_neg_integer(), non_neg_integer()) -> ok.
-document_highlight(Uri, Line, Char) ->
-  gen_server:call(?SERVER, {document_highlight, {Uri, Line, Char}}).
 
 -spec document_codeaction(uri(), range(), [els_diagnostics:diagnostic()]) -> ok.
 document_codeaction(Uri, Range, Diagnostics) ->
@@ -363,7 +358,6 @@ method_lookup(completionitem_resolve)   -> <<"completionItem/resolve">>;
 method_lookup(definition)               -> <<"textDocument/definition">>;
 method_lookup(document_symbol)          -> <<"textDocument/documentSymbol">>;
 method_lookup(references)               -> <<"textDocument/references">>;
-method_lookup(document_highlight)       -> <<"textDocument/documentHighlight">>;
 method_lookup(document_codeaction)      -> <<"textDocument/codeAction">>;
 method_lookup(document_codelens)        -> <<"textDocument/codeLens">>;
 method_lookup(rename)                   -> <<"textDocument/rename">>;
