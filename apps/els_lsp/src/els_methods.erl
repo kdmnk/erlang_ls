@@ -19,9 +19,6 @@
         , textdocument_implementation/2
         , textdocument_references/2
         , textdocument_documenthighlight/2
-        , textdocument_formatting/2
-        , textdocument_rangeformatting/2
-        , textdocument_ontypeformatting/2
         , textdocument_foldingrange/2
         , workspace_didchangeconfiguration/2
         , textdocument_codeaction/2
@@ -286,39 +283,6 @@ textdocument_documenthighlight(Params, State) ->
   Provider = els_document_highlight_provider,
   Response = els_provider:handle_request(Provider,
                                          {document_highlight, Params}),
-  {response, Response, State}.
-
-%%==============================================================================
-%% textDocument/formatting
-%%==============================================================================
-
--spec textdocument_formatting(params(), state()) -> result().
-textdocument_formatting(Params, State) ->
-  Provider = els_formatting_provider,
-  Response = els_provider:handle_request(Provider,
-                                         {document_formatting, Params}),
-  {response, Response, State}.
-
-%%==============================================================================
-%% textDocument/rangeFormatting
-%%==============================================================================
-
--spec textdocument_rangeformatting(params(), state()) -> result().
-textdocument_rangeformatting(Params, State) ->
-  Provider = els_formatting_provider,
-  Response = els_provider:handle_request(Provider,
-                                         {document_rangeformatting, Params}),
-  {response, Response, State}.
-
-%%==============================================================================
-%% textDocument/onTypeFormatting
-%%==============================================================================
-
--spec textdocument_ontypeformatting(params(), state()) -> result().
-textdocument_ontypeformatting(Params, State) ->
-  Provider = els_formatting_provider,
-  Response = els_provider:handle_request(Provider,
-                                         {document_ontypeformatting, Params}),
   {response, Response, State}.
 
 %%==============================================================================

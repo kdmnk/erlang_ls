@@ -153,10 +153,6 @@ server_capabilities() ->
             els_workspace_symbol_provider:is_enabled()
         , codeActionProvider =>
             els_code_action_provider:is_enabled()
-        , documentFormattingProvider =>
-            els_formatting_provider:is_enabled_document()
-        , documentRangeFormattingProvider =>
-            els_formatting_provider:is_enabled_range()
         , foldingRangeProvider =>
             els_folding_range_provider:is_enabled()
         , implementationProvider =>

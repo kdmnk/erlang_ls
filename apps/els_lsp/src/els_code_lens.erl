@@ -56,12 +56,7 @@
 
 -spec available_lenses() -> [lens_id()].
 available_lenses() ->
-  [ <<"ct-run-test">>
-  , <<"rename-fun">>
-  , <<"show-behaviour-usages">>
-  , <<"suggest-spec">>
-  , <<"function-references">>
-  ].
+  [ <<"rename-fun">> ].
 
 -spec default_lenses() -> [lens_id()].
 default_lenses() ->

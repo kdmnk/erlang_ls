@@ -57,15 +57,7 @@
 
 -spec available_diagnostics() -> [diagnostic_id()].
 available_diagnostics() ->
-  [ <<"bound_var_in_pattern">>
-  , <<"compiler">>
-  , <<"crossref">>
-  , <<"dialyzer">>
-  , <<"elvis">>
-  , <<"unused_includes">>
-  , <<"unused_macros">>
-  , <<"unused_record_fields">>
-  ].
+  [ ].
 
 -spec default_diagnostics() -> [diagnostic_id()].
 default_diagnostics() ->

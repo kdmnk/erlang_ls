@@ -59,16 +59,13 @@ execute_command(<<"code_action_do_something">>
 execute_command(<<"rename-fun">>, [Module, Function, Arity, Path]) ->
   {module, _Module} = code:ensure_loaded(api_wrangler),
   ?LOG_INFO("Renaming fun... (~p, ~p, ~p, ~p)", [Module, Function, Arity, Path]),
-  api_wrangler:rename_fun(binary_to_atom(Module), binary_to_atom(Function), Arity, newfun, [binary_to_list(Path)]),
-  spawn(api_wrangler, rename_fun, [binary_to_atom(Module), binary_to_atom(Function), Arity, newfun, [binary_to_list(Path)]]),
+  %api_wrangler:rename_fun(binary_to_atom(Module), binary_to_atom(Function), Arity, newfun, [binary_to_list(Path)]),
+  %spawn(api_wrangler, rename_fun, [binary_to_atom(Module), binary_to_atom(Function), Arity, newfun, [binary_to_list(Path)]]),
   %?LOG_INFO("Renamed fun..."),
   els_server:send_notification(<<"window/showMessage">>,
                                #{ type => ?MESSAGE_TYPE_INFO,
                                   message => <<"Hello">>
                                 }),
-  [];
-execute_command(<<"ct-run-test">>, [Params]) ->
-  els_command_ct_run_test:execute(Params),
   [];
 execute_command(<<"function-references">>, [_Params]) ->
   [];
