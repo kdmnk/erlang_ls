@@ -24,21 +24,17 @@
         , '$_unexpectedrequest'/0
         , completion/5
         , completionitem_resolve/1
-        , definition/3
         , did_open/4
         , did_save/1
         , did_close/1
         , document_symbol/1
         , exit/0
-        , hover/3
         , implementation/3
         , initialize/1
         , initialize/2
         , initialized/0
-        , references/3
         , document_codeaction/3
         , document_codelens/1
-        , document_rename/4
         , folding_range/1
         , shutdown/0
         , start_link/1
@@ -114,21 +110,9 @@ completion(Uri, Line, Char, TriggerKind, TriggerCharacter) ->
 completionitem_resolve(CompletionItem) ->
   gen_server:call(?SERVER, {completionitem_resolve, CompletionItem}).
 
--spec definition(uri(), non_neg_integer(), non_neg_integer()) -> ok.
-definition(Uri, Line, Char) ->
-  gen_server:call(?SERVER, {definition, {Uri, Line, Char}}).
-
--spec hover(uri(), non_neg_integer(), non_neg_integer()) -> ok.
-hover(Uri, Line, Char) ->
-  gen_server:call(?SERVER, {hover, {Uri, Line, Char}}).
-
 -spec implementation(uri(), non_neg_integer(), non_neg_integer()) -> ok.
 implementation(Uri, Line, Char) ->
   gen_server:call(?SERVER, {implementation, {Uri, Line, Char}}).
-
--spec references(uri(), non_neg_integer(), non_neg_integer()) -> ok.
-references(Uri, Line, Char) ->
-  gen_server:call(?SERVER, {references, {Uri, Line, Char}}).
 
 -spec document_codeaction(uri(), range(), [els_diagnostics:diagnostic()]) -> ok.
 document_codeaction(Uri, Range, Diagnostics) ->
@@ -137,9 +121,6 @@ document_codeaction(Uri, Range, Diagnostics) ->
 -spec document_codelens(uri()) -> ok.
 document_codelens(Uri) ->
   gen_server:call(?SERVER, {document_codelens, {Uri}}).
-
-document_rename(Uri, Line, Character, NewName) ->
-  gen_server:call(?SERVER, {rename, {Uri, Line, Character, NewName}}).
 
 -spec did_open(uri(), binary(), number(), binary()) -> ok.
 did_open(Uri, LanguageId, Version, Text) ->
@@ -357,10 +338,8 @@ method_lookup(completion)               -> <<"textDocument/completion">>;
 method_lookup(completionitem_resolve)   -> <<"completionItem/resolve">>;
 method_lookup(definition)               -> <<"textDocument/definition">>;
 method_lookup(document_symbol)          -> <<"textDocument/documentSymbol">>;
-method_lookup(references)               -> <<"textDocument/references">>;
 method_lookup(document_codeaction)      -> <<"textDocument/codeAction">>;
 method_lookup(document_codelens)        -> <<"textDocument/codeLens">>;
-method_lookup(rename)                   -> <<"textDocument/rename">>;
 method_lookup(did_open)                 -> <<"textDocument/didOpen">>;
 method_lookup(did_save)                 -> <<"textDocument/didSave">>;
 method_lookup(did_close)                -> <<"textDocument/didClose">>;
@@ -411,13 +390,6 @@ request_params({ document_codeaction, {Uri, Range, Diagnostics}}) ->
    };
 request_params({ document_codelens, {Uri}}) ->
   #{ textDocument => #{ uri => Uri }};
-request_params({rename, {Uri, Line, Character, NewName}}) ->
-  #{ textDocument => #{ uri => Uri }
-   , position     => #{ line      => Line
-                      , character => Character
-                      }
-   , newName      => NewName
-   };
 request_params({folding_range, {Uri}}) ->
   TextDocument = #{ uri => Uri },
   #{ textDocument => TextDocument };

@@ -113,17 +113,11 @@ server_capabilities() ->
              , change    => els_text_synchronization:sync_mode()
              , save      => #{includeText => false}
              }
-        , hoverProvider =>
-            els_hover_provider:is_enabled()
         , completionProvider =>
             #{ resolveProvider => true
              , triggerCharacters =>
                  els_completion_provider:trigger_characters()
              }
-        , definitionProvider =>
-            els_definition_provider:is_enabled()
-        , referencesProvider =>
-            els_references_provider:is_enabled()
         , documentSymbolProvider =>
             els_document_symbol_provider:is_enabled()
         , workspaceSymbolProvider =>
@@ -138,9 +132,7 @@ server_capabilities() ->
             els_execute_command_provider:options()
         , codeLensProvider =>
             els_code_lens_provider:options()
-        , renameProvider =>
-            els_rename_provider:is_enabled()
-        },
+       },
      serverInfo =>
        #{ name    => <<"Erlang LS">>
         , version => els_utils:to_binary(Version)

@@ -14,15 +14,11 @@
         , textdocument_didsave/2
         , textdocument_didclose/2
         , textdocument_documentsymbol/2
-        , textdocument_hover/2
-        , textdocument_definition/2
         , textdocument_implementation/2
-        , textdocument_references/2
         , textdocument_foldingrange/2
         , workspace_didchangeconfiguration/2
         , textdocument_codeaction/2
         , textdocument_codelens/2
-        , textdocument_rename/2
         , workspace_executecommand/2
         , workspace_didchangewatchedfiles/2
         , workspace_symbol/2
@@ -221,16 +217,6 @@ textdocument_documentsymbol(Params, State) ->
   {response, Response, State}.
 
 %%==============================================================================
-%% textDocument/hover
-%%==============================================================================
-
--spec textdocument_hover(params(), state()) -> result().
-textdocument_hover(Params, State) ->
-  Provider = els_hover_provider,
-  Job = els_provider:handle_request(Provider, {hover, Params}),
-  {noresponse, {Provider, Job}, State}.
-
-%%==============================================================================
 %% textDocument/completion
 %%==============================================================================
 
@@ -248,26 +234,6 @@ textdocument_completion(Params, State) ->
 completionitem_resolve(Params, State) ->
   Provider = els_completion_provider,
   Response = els_provider:handle_request(Provider, {resolve, Params}),
-  {response, Response, State}.
-
-%%==============================================================================
-%% textDocument/definition
-%%==============================================================================
-
--spec textdocument_definition(params(), state()) -> result().
-textdocument_definition(Params, State) ->
-  Provider = els_definition_provider,
-  Response = els_provider:handle_request(Provider, {definition, Params}),
-  {response, Response, State}.
-
-%%==============================================================================
-%% textDocument/references
-%%==============================================================================
-
--spec textdocument_references(params(), state()) -> result().
-textdocument_references(Params, State) ->
-  Provider = els_references_provider,
-  Response = els_provider:handle_request(Provider, {references, Params}),
   {response, Response, State}.
 
 %%==============================================================================
@@ -321,17 +287,6 @@ textdocument_codelens(Params, State) ->
   Provider = els_code_lens_provider,
   Job = els_provider:handle_request(Provider, {document_codelens, Params}),
   {noresponse, {Provider, Job}, State}.
-
-%%==============================================================================
-%% textDocument/rename
-%%==============================================================================
-
--spec textdocument_rename(params(), state()) -> result().
-textdocument_rename(Params, State) ->
-  Provider = els_rename_provider,
-  Response = els_provider:handle_request(Provider, {rename, Params}),
-  {response, Response, State}.
-
 
 %%==============================================================================
 %% workspace/executeCommand

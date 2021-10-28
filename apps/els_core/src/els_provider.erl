@@ -29,18 +29,14 @@
 
 -type config()   :: any().
 -type provider() :: els_completion_provider
-                  | els_definition_provider
                   | els_document_symbol_provider
-                  | els_hover_provider
-                  | els_references_provider
                   | els_workspace_symbol_provider
                   | els_folding_range_provider
                   | els_implementation_provider
                   | els_code_action_provider
                   | els_general_provider
                   | els_code_lens_provider
-                  | els_execute_command_provider
-                  | els_rename_provider.
+                  | els_execute_command_provider.
 -type request()  :: {atom() | binary(), map()}.
 -type state()    :: #{ provider := provider()
                      , internal_state := any()
@@ -116,10 +112,7 @@ handle_info(Request, State) ->
 -spec available_providers() -> [provider()].
 available_providers() ->
   [ els_completion_provider
-  , els_definition_provider
   , els_document_symbol_provider
-  , els_hover_provider
-  , els_references_provider
   , els_workspace_symbol_provider
   , els_folding_range_provider
   , els_implementation_provider
@@ -127,7 +120,6 @@ available_providers() ->
   , els_general_provider
   , els_code_lens_provider
   , els_execute_command_provider
-  , els_rename_provider
   ].
 
 -spec enabled_providers() -> [provider()].

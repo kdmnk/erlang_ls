@@ -24,12 +24,7 @@ is_enabled() -> true.
 
 -spec options() -> map().
 options() ->
-  #{ commands => [ els_command:with_prefix(<<"replace-lines">>)
-                 , els_command:with_prefix(<<"rename-fun">>)
-                 , els_command:with_prefix(<<"ct-run-test">>)
-                 , els_command:with_prefix(<<"show-behaviour-usages">>)
-                 , els_command:with_prefix(<<"suggest-spec">>)
-                 , els_command:with_prefix(<<"function-references">>)
+  #{ commands => [ els_command:with_prefix(<<"rename-fun">>)
                  , els_command:with_prefix(<<"code_action_do_something">>)
                  ] }.
 
@@ -66,26 +61,6 @@ execute_command(<<"rename-fun">>, [Module, Function, Arity, Path]) ->
                                #{ type => ?MESSAGE_TYPE_INFO,
                                   message => <<"Hello">>
                                 }),
-  [];
-execute_command(<<"function-references">>, [_Params]) ->
-  [];
-execute_command(<<"show-behaviour-usages">>, [_Params]) ->
-  [];
-execute_command(<<"suggest-spec">>, []) ->
-  [];
-execute_command(<<"suggest-spec">>, [#{ <<"uri">> := Uri
-                                      , <<"line">> := Line
-                                      , <<"spec">> := Spec
-                                      }]) ->
-  Method = <<"workspace/applyEdit">>,
-  {ok, #{text := Text}} = els_utils:lookup_document(Uri),
-  LineText = els_text:line(Text, Line - 1),
-  NewText = <<Spec/binary, "\n", LineText/binary, "\n">>,
-  Params =
-    #{ edit =>
-         els_text_edit:edit_replace_text(Uri, NewText, Line - 1, Line)
-     },
-  els_server:send_request(Method, Params),
   [];
 execute_command(Command, Arguments) ->
   ?LOG_INFO("Unsupported command: [Command=~p] [Arguments=~p]"

@@ -359,9 +359,6 @@
                   #{ documentationFormat => [markup_kind()]
                    }
               }
-         , references =>
-             #{ dynamicRegistration => boolean()
-              }
          , documentSymbol =>
              #{ dynamicRegistration => boolean()
               , symbolKind =>
