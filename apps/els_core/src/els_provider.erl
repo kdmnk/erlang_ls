@@ -28,8 +28,7 @@
 -optional_callbacks([init/0, handle_info/2, cancel_request/2]).
 
 -type config()   :: any().
--type provider() :: els_completion_provider
-                  | els_document_symbol_provider
+-type provider() :: els_document_symbol_provider
                   | els_workspace_symbol_provider
                   | els_folding_range_provider
                   | els_implementation_provider
@@ -111,8 +110,7 @@ handle_info(Request, State) ->
 
 -spec available_providers() -> [provider()].
 available_providers() ->
-  [ els_completion_provider
-  , els_document_symbol_provider
+  [ els_document_symbol_provider
   , els_workspace_symbol_provider
   , els_folding_range_provider
   , els_implementation_provider

@@ -22,8 +22,6 @@
         , '$_cancelrequest'/1
         , '$_settracenotification'/0
         , '$_unexpectedrequest'/0
-        , completion/5
-        , completionitem_resolve/1
         , did_open/4
         , did_save/1
         , did_close/1

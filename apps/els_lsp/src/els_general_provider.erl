@@ -113,11 +113,6 @@ server_capabilities() ->
              , change    => els_text_synchronization:sync_mode()
              , save      => #{includeText => false}
              }
-        , completionProvider =>
-            #{ resolveProvider => true
-             , triggerCharacters =>
-                 els_completion_provider:trigger_characters()
-             }
         , documentSymbolProvider =>
             els_document_symbol_provider:is_enabled()
         , workspaceSymbolProvider =>
