@@ -12,7 +12,6 @@
         , textdocument_didsave/2
         , textdocument_didclose/2
         , textdocument_documentsymbol/2
-        , textdocument_implementation/2
         , textdocument_foldingrange/2
         , workspace_didchangeconfiguration/2
         , textdocument_codeaction/2
@@ -225,15 +224,6 @@ textdocument_foldingrange(Params, State) ->
                                         , {document_foldingrange, Params}),
   {response, Response, State}.
 
-%%==============================================================================
-%% textDocument/implementation
-%%==============================================================================
-
--spec textdocument_implementation(params(), state()) -> result().
-textdocument_implementation(Params, State) ->
-  Provider = els_implementation_provider,
-  Response = els_provider:handle_request(Provider, {implementation, Params}),
-  {response, Response, State}.
 
 %%==============================================================================
 %% workspace/didChangeConfiguration

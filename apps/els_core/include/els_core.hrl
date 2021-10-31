@@ -336,19 +336,6 @@
               , willSaveWaitUntil => boolean()
               , didSave => boolean()
               }
-         , completion =>
-             #{ dynamicRegistration => boolean()
-              , completionItem =>
-                  #{ snippetSupport => boolean()
-                   , commitCharactersSupport => boolean()
-                   , documentationFormat => markup_kind()
-                   , deprecatedSupport => boolean()
-                   }
-              , completionItemKind =>
-                  #{ valueSet => [completion_item_kind()]
-                   }
-              , contextSupport => boolean()
-              }
          , hover =>
              #{ dynamicRegistration => boolean()
               , contentFormat => [markup_kind()]
@@ -365,22 +352,7 @@
                   #{ valueSet => [symbol_kind()]
                    }
               }
-         , formatting =>
-             #{ dynamicRegistration => boolean()
-              }
-         , rangeFormatting =>
-             #{ dynamicRegistration => boolean()
-              }
-         , onTypeFormatting =>
-             #{ dynamicRegistration => boolean()
-              }
-         , definition =>
-             #{ dynamicRegistration => boolean()
-              }
          , typeDefinition =>
-             #{ dynamicRegistration => boolean()
-              }
-         , implementation =>
              #{ dynamicRegistration => boolean()
               }
          , codeAction =>
@@ -399,12 +371,6 @@
               }
          , colorProvider =>
              #{ dynamicRegistration => boolean()
-              }
-         , rename =>
-             #{ dynamicRegistration => boolean()
-              }
-         , publishDiagnostics =>
-             #{ relatedInformation => boolean()
               }
          , foldingRange =>
              #{ dynamicRegistration => boolean()
@@ -519,20 +485,6 @@
                                   , active_parameters => number()
                                   }.
 
-%%------------------------------------------------------------------------------
-%% Formatting
-%%------------------------------------------------------------------------------
--type formatting_options() :: #{ tabSize           := integer()
-                               , insertSpaces      := boolean()
-                               %% Spec says further properties must
-                               %% meet the following signature
-                               %%   [key: string]: boolean | number | string;
-                               }.
-
--type document_ontypeformatting_options() :: false |
-       #{ first_trigger_character := string()
-        , more_trigger_character  => string()
-        }.
 
 %%------------------------------------------------------------------------------
 %% Code Actions

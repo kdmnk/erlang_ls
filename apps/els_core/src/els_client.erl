@@ -27,7 +27,6 @@
         , did_close/1
         , document_symbol/1
         , exit/0
-        , implementation/3
         , initialize/1
         , initialize/2
         , initialized/0
@@ -92,25 +91,6 @@
 '$_unexpectedrequest'() ->
   gen_server:call(?SERVER, {'$_unexpectedrequest'}).
 
-%% TODO: More accurate and consistent parameters list
--spec completion( uri()
-                , non_neg_integer()
-                , non_neg_integer()
-                , integer()
-                , binary()
-                ) ->
-  ok.
-completion(Uri, Line, Char, TriggerKind, TriggerCharacter) ->
-  Opts = {Uri, Line, Char, TriggerKind, TriggerCharacter},
-  gen_server:call(?SERVER, {completion, Opts}).
-
--spec completionitem_resolve(completion_item()) -> ok.
-completionitem_resolve(CompletionItem) ->
-  gen_server:call(?SERVER, {completionitem_resolve, CompletionItem}).
-
--spec implementation(uri(), non_neg_integer(), non_neg_integer()) -> ok.
-implementation(Uri, Line, Char) ->
-  gen_server:call(?SERVER, {implementation, {Uri, Line, Char}}).
 
 -spec document_codeaction(uri(), range(), [els_diagnostics:diagnostic()]) -> ok.
 document_codeaction(Uri, Range, Diagnostics) ->
@@ -342,7 +322,6 @@ method_lookup(did_open)                 -> <<"textDocument/didOpen">>;
 method_lookup(did_save)                 -> <<"textDocument/didSave">>;
 method_lookup(did_close)                -> <<"textDocument/didClose">>;
 method_lookup(hover)                    -> <<"textDocument/hover">>;
-method_lookup(implementation)           -> <<"textDocument/implementation">>;
 method_lookup(folding_range)            -> <<"textDocument/foldingRange">>;
 method_lookup(workspace_symbol)         -> <<"workspace/symbol">>;
 method_lookup(workspace_executecommand) -> <<"workspace/executeCommand">>;

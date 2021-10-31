@@ -121,8 +121,6 @@ server_capabilities() ->
             els_code_action_provider:is_enabled()
         , foldingRangeProvider =>
             els_folding_range_provider:is_enabled()
-        , implementationProvider =>
-            els_implementation_provider:is_enabled()
         , executeCommandProvider =>
             els_execute_command_provider:options()
         , codeLensProvider =>

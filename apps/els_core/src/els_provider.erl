@@ -31,7 +31,6 @@
 -type provider() :: els_document_symbol_provider
                   | els_workspace_symbol_provider
                   | els_folding_range_provider
-                  | els_implementation_provider
                   | els_code_action_provider
                   | els_general_provider
                   | els_code_lens_provider
@@ -113,7 +112,6 @@ available_providers() ->
   [ els_document_symbol_provider
   , els_workspace_symbol_provider
   , els_folding_range_provider
-  , els_implementation_provider
   , els_code_action_provider
   , els_general_provider
   , els_code_lens_provider
