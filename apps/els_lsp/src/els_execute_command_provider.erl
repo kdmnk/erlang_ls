@@ -32,8 +32,8 @@ options() ->
 handle_request({workspace_executecommand, Params}, State) ->
   #{ <<"command">> := PrefixedCommand } = Params,
   Arguments = maps:get(<<"arguments">>, Params, []),
-  Result = execute_command( els_command:without_prefix(PrefixedCommand)
-                          , Arguments),
+  Result = execute_command(els_command:without_prefix(PrefixedCommand),
+                           Arguments),
   {Result, State}.
 
 %%==============================================================================
@@ -51,16 +51,21 @@ execute_command(<<"code_action_do_something">>
       }),
   ?LOG_INFO("code_action_do_something: ~p, ~p, ~p", [Uri, LineFrom, LineTo]),
   [];
-execute_command(<<"rename-fun">>, [Module, Function, Arity, Path]) ->
+execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path]) ->
   {module, _Module} = code:ensure_loaded(api_wrangler),
-  ?LOG_INFO("Renaming fun... (~p, ~p, ~p, ~p)", [Module, Function, Arity, Path]),
-  %api_wrangler:rename_fun(binary_to_atom(Module), binary_to_atom(Function), Arity, newfun, [binary_to_list(Path)]),
-  %spawn(api_wrangler, rename_fun, [binary_to_atom(Module), binary_to_atom(Function), Arity, newfun, [binary_to_list(Path)]]),
-  %?LOG_INFO("Renamed fun..."),
-  els_server:send_notification(<<"window/showMessage">>,
-                               #{ type => ?MESSAGE_TYPE_INFO,
-                                  message => <<"Hello">>
-                                }),
+  ?LOG_INFO("Renaming fun... (~p, ~p, ~p, ~p)", [Mod, Fun, Arity, Path]),
+  A = api_wrangler:rename_fun(binary_to_atom(Mod), binary_to_atom(Fun), Arity, newfun, [Path]),
+  ?LOG_INFO("Rename result: ~p", [A]),
+  % case A of
+  %   {ok, _FilesChanged} -> els_server:send_notification(<<"window/showMessage">>,
+  %     #{ type => ?MESSAGE_TYPE_INFO,
+  %       message => <<"Renaming successful">>
+  %     });
+  %   {error, Reason} -> els_server:send_notification(<<"window/showMessage">>,
+  %   #{ type => ?MESSAGE_TYPE_INFO,
+  %     message => <<Reason>>
+  %   })
+  % end,
   [];
 execute_command(Command, Arguments) ->
   ?LOG_INFO("Unsupported command: [Command=~p] [Arguments=~p]"
