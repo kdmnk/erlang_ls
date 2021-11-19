@@ -42,13 +42,13 @@ code_actions(Uri, Range, _Context) ->
   {module, _Module} = code:ensure_loaded(wrangler_syntax),
   {module, _Module2} = code:ensure_loaded(api_interface),
   Path = binary_to_list(els_uri:path(Uri)),
-  case api_interface:pos_to_fun_name(Path, {StartLine, StartCol}) of
+  case api_interface:pos_to_fun_name(Path, {StartLine+1, StartCol}) of
     {ok, {Mod, Fun, Arity, _OccurPos, _DefPos}} ->
-      [#{title => <<"Rename function">>,
+      [#{title => Fun,
         kind => ?CODE_ACTION_KIND_REFACTOR,
         command =>
           els_command:make_command(
-            <<"Rename function">>,
+            Mod,
             <<"rename-fun">>,
             [Mod, Fun, Arity, Path]
           )

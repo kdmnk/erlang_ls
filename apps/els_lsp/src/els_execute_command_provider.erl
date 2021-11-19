@@ -25,7 +25,7 @@ is_enabled() -> true.
 -spec options() -> map().
 options() ->
   #{ commands => [ els_command:with_prefix(<<"rename-fun">>)
-                 , els_command:with_prefix(<<"code_action_do_something">>)
+                 , els_command:with_prefix(<<"rename-mod">>)
                  ] }.
 
 -spec handle_request(any(), state()) -> {any(), state()}.
@@ -41,31 +41,45 @@ handle_request({workspace_executecommand, Params}, State) ->
 %%==============================================================================
 
 -spec execute_command(els_command:command_id(), [any()]) -> [map()].
-execute_command(<<"code_action_do_something">>
-               , [#{ <<"uri">>   := Uri
-                   , <<"from">>  := LineFrom
-                   , <<"to">>    := LineTo }]) ->
-  els_server:send_notification(<<"window/showMessage">>,
-    #{ type => ?MESSAGE_TYPE_INFO,
-        message => <<"Doing something">>
-      }),
-  ?LOG_INFO("code_action_do_something: ~p, ~p, ~p", [Uri, LineFrom, LineTo]),
-  [];
-execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path]) ->
+
+execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path, NewMod]) ->
   {module, _Module} = code:ensure_loaded(api_wrangler),
-  ?LOG_INFO("Renaming fun... (~p, ~p, ~p, ~p)", [Mod, Fun, Arity, Path]),
-  A = api_wrangler:rename_fun(binary_to_atom(Mod), binary_to_atom(Fun), Arity, newfun, [Path]),
+  ?LOG_INFO("Renaming fun... (~p, ~p, ~p, ~p, ~p)", [Mod, Fun, Arity, Path, NewMod]),
+  Changes = api_wrangler:rename_fun(binary_to_atom(Mod), binary_to_atom(Fun), Arity, binary_to_atom(NewMod), [Path]),
+  ?LOG_INFO("Rename result: ~p", [Changes]),
+  {ok, [{OldName, NewName, Text}]} = Changes,
+
+  Method = <<"workspace/applyEdit">>,
+  Params =
+    #{ edit =>
+        #{ changes =>
+          #{ els_uri:uri(list_to_binary(OldName)) => [
+            #{ range =>
+              #{ start => #{ line => 0, character => 0 },
+                'end' => #{ line => length(binary:split(Text, <<"\n">>, [global])), character => 0 }
+              }
+            ,  newText => els_utils:to_binary(Text)
+          }]
+        }}
+     },
+  els_server:send_request(Method, Params),
+  Method = <<"workspace/applyEdit">>,
+  Params =
+    #{ edit =>
+        #{ documentChanges =>
+          #{ kind => "rename",
+             oldUri => els_uri:uri(list_to_binary(OldName)),
+             newUri => els_uri:uri(list_to_binary("masiknev"))
+          }
+        }
+     },
+  els_server:send_request(Method, Params),
+  [];
+execute_command(<<"rename-mod">>, [Mod, Path, NewMod]) ->
+  {module, _Module} = code:ensure_loaded(api_wrangler),
+  ?LOG_INFO("Renaming mod... (~p, ~p, ~p)", [Mod, Path, NewMod]),
+  A = api_wrangler:rename_fun(binary_to_atom(Mod), binary_to_atom(NewMod), [Path]),
   ?LOG_INFO("Rename result: ~p", [A]),
-  % case A of
-  %   {ok, _FilesChanged} -> els_server:send_notification(<<"window/showMessage">>,
-  %     #{ type => ?MESSAGE_TYPE_INFO,
-  %       message => <<"Renaming successful">>
-  %     });
-  %   {error, Reason} -> els_server:send_notification(<<"window/showMessage">>,
-  %   #{ type => ?MESSAGE_TYPE_INFO,
-  %     message => <<Reason>>
-  %   })
-  % end,
   [];
 execute_command(Command, Arguments) ->
   ?LOG_INFO("Unsupported command: [Command=~p] [Arguments=~p]"
