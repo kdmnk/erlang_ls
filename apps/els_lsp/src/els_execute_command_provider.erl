@@ -50,29 +50,27 @@ execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path, NewMod]) ->
   {ok, [{OldName, NewName, Text}]} = Changes,
 
   Method = <<"workspace/applyEdit">>,
-  Params =
-    #{ edit =>
-        #{ changes =>
-          #{ els_uri:uri(list_to_binary(OldName)) => [
-            #{ range =>
-              #{ start => #{ line => 0, character => 0 },
-                'end' => #{ line => length(binary:split(Text, <<"\n">>, [global])), character => 0 }
-              }
-            ,  newText => els_utils:to_binary(Text)
-          }]
-        }}
-     },
-  els_server:send_request(Method, Params),
-  Method = <<"workspace/applyEdit">>,
-  Params =
-    #{ edit =>
-        #{ documentChanges =>
-          #{ kind => "rename",
-             oldUri => els_uri:uri(list_to_binary(OldName)),
-             newUri => els_uri:uri(list_to_binary("masiknev"))
+  Params = #{
+    edit => #{
+      documentChanges => [
+        #{
+          kind => <<"rename">>,
+          oldUri => els_uri:uri(list_to_binary(OldName)),
+          newUri => els_uri:uri(list_to_binary("/Users/domi/Documents/GitHub/vscode/erlang_ls/apps/els_lsp/src/els_execute_command_provider2.erl"))
+        },
+        #{
+          textDocument => #{ uri => els_uri:uri(list_to_binary("/Users/domi/Documents/GitHub/vscode/erlang_ls/apps/els_lsp/src/els_execute_command_provider2.erl")) },
+          edits => #{
+            range => #{
+              start => #{ line => 0, character => 0 },
+              'end' => #{ line => length(binary:split(Text, <<"\n">>, [global])), character => 0 }
+            },
+            newText => els_utils:to_binary(Text)
           }
         }
-     },
+      ]
+    }
+  },
   els_server:send_request(Method, Params),
   [];
 execute_command(<<"rename-mod">>, [Mod, Path, NewMod]) ->
