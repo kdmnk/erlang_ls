@@ -53,13 +53,16 @@ execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path, NewMod]) ->
   Params = #{
     edit => #{
       documentChanges => [
+        % #{
+        %   kind => <<"rename">>,
+        %   oldUri => els_uri:uri(list_to_binary(OldName)),
+        %   newUri => els_uri:uri(list_to_binary("/Users/domi/Documents/GitHub/vscode/erlang_ls/apps/els_lsp/src/els_execute_command_provider2.erl"))
+        % }
         #{
-          kind => <<"rename">>,
-          oldUri => els_uri:uri(list_to_binary(OldName)),
-          newUri => els_uri:uri(list_to_binary("/Users/domi/Documents/GitHub/vscode/erlang_ls/apps/els_lsp/src/els_execute_command_provider2.erl"))
-        },
-        #{
-          textDocument => #{ uri => els_uri:uri(list_to_binary("/Users/domi/Documents/GitHub/vscode/erlang_ls/apps/els_lsp/src/els_execute_command_provider2.erl")) },
+          textDocument => #{
+            uri => els_uri:uri(list_to_binary(OldName)),
+            version => "null"
+          },
           edits => #{
             range => #{
               start => #{ line => 0, character => 0 },
