@@ -26,6 +26,7 @@ is_enabled() -> true.
 options() ->
   #{ commands => [ els_command:with_prefix(<<"rename-fun">>)
                  , els_command:with_prefix(<<"rename-mod">>)
+                 , els_command:with_prefix(<<"extract-fun">>)
                  ] }.
 
 -spec handle_request(any(), state()) -> {any(), state()}.
@@ -46,30 +47,24 @@ execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path, NewMod]) ->
   {module, _Module} = code:ensure_loaded(api_wrangler),
   ?LOG_INFO("Renaming fun... (~p, ~p, ~p, ~p, ~p)", [Mod, Fun, Arity, Path, NewMod]),
   Changes = api_wrangler:rename_fun(binary_to_atom(Mod), binary_to_atom(Fun), Arity, binary_to_atom(NewMod), [Path]),
-  ?LOG_INFO("Rename result: ~p", [Changes]),
-  {ok, [{OldName, NewName, Text}]} = Changes,
+  {ok, [{OldName, _NewName, Text}]} = Changes,
 
   Method = <<"workspace/applyEdit">>,
   Params = #{
     edit => #{
       documentChanges => [
-        % #{
-        %   kind => <<"rename">>,
-        %   oldUri => els_uri:uri(list_to_binary(OldName)),
-        %   newUri => els_uri:uri(list_to_binary("/Users/domi/Documents/GitHub/vscode/erlang_ls/apps/els_lsp/src/els_execute_command_provider2.erl"))
-        % }
         #{
           textDocument => #{
             uri => els_uri:uri(list_to_binary(OldName)),
-            version => "null"
+            version => null
           },
-          edits => #{
+          edits => [#{
             range => #{
               start => #{ line => 0, character => 0 },
               'end' => #{ line => length(binary:split(Text, <<"\n">>, [global])), character => 0 }
             },
             newText => els_utils:to_binary(Text)
-          }
+          }]
         }
       ]
     }
@@ -79,9 +74,57 @@ execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path, NewMod]) ->
 execute_command(<<"rename-mod">>, [Mod, Path, NewMod]) ->
   {module, _Module} = code:ensure_loaded(api_wrangler),
   ?LOG_INFO("Renaming mod... (~p, ~p, ~p)", [Mod, Path, NewMod]),
-  A = api_wrangler:rename_fun(binary_to_atom(Mod), binary_to_atom(NewMod), [Path]),
-  ?LOG_INFO("Rename result: ~p", [A]),
+  Changes = api_wrangler:rename_mod(binary_to_atom(Mod), binary_to_atom(NewMod), [binary_to_list(Path)]),
+  {ok, [{OldName, NewName, Text}]} = Changes,
+
+  Method = <<"workspace/applyEdit">>,
+  Params = #{
+    edit => #{
+      documentChanges => [
+         #{
+           kind => <<"rename">>,
+           oldUri => els_uri:uri(list_to_binary(OldName)),
+           newUri => els_uri:uri(list_to_binary(NewName))
+         },
+        #{
+          textDocument => #{
+            uri => els_uri:uri(list_to_binary(NewName)),
+            version => null
+          },
+          edits => [#{
+            range => #{
+              start => #{ line => 0, character => 0 },
+              'end' => #{ line => length(binary:split(Text, <<"\n">>, [global])), character => 0 }
+            },
+            newText => els_utils:to_binary(Text)
+          }]
+        }
+      ]
+    }
+  },
+  els_server:send_request(Method, Params),
   [];
+execute_command(<<"extract-fun">>, [Path, StartCol, StartLine, EndCol, EndLine, NewName]) ->
+  Changes = refac_new_fun:fun_extraction(Path, {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(NewName), command, 4),
+  {ok, [{OldPath, _NewPath, Text}]} = Changes,
+
+  Method = <<"workspace/applyEdit">>,
+  Params = #{
+    edit => #{
+      changes => #{
+        els_uri:uri(list_to_binary(OldPath)) => [#{
+          range => #{
+            start => #{ line => 0, character => 0 },
+            'end' => #{ line => length(binary:split(Text, <<"\n">>, [global])), character => 0 }
+          },
+          newText => els_utils:to_binary(Text)
+        }]
+      }
+    }
+  },
+  els_server:send_request(Method, Params),
+  [];
+
 execute_command(Command, Arguments) ->
   ?LOG_INFO("Unsupported command: [Command=~p] [Arguments=~p]"
            , [Command, Arguments]),

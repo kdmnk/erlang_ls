@@ -5,16 +5,16 @@
 -module(els_code_lens_rename_mod).
 
 -behaviour(els_code_lens).
--export([asd/3
-        , is_default/0
-        , pois/1
+-export([command/3
+         ,is_default/0
+         ,pois/1
         ]).
 
 -include("els_lsp.hrl").
 
--spec asd(els_dt_document:item(), poi(), els_code_lens:state()) ->
-             els_command:command().
-asd(Document, _POI, _State) ->
+-spec command(els_dt_document:item(), poi(), els_code_lens:state()) ->
+                 els_command:command().
+command(Document, _POI, _State) ->
   Title = title(),
   CommandId = <<"rename-mod">>,
   #{uri := Uri} = Document,
@@ -24,7 +24,7 @@ asd(Document, _POI, _State) ->
 
 -spec is_default() -> boolean().
 is_default() ->
-  false.
+  true.
 
 -spec pois(els_dt_document:item()) -> [poi()].
 pois(Document) ->
@@ -32,4 +32,4 @@ pois(Document) ->
 
 -spec title() -> binary().
 title() ->
-  <<"Wrangler: rename module">>.
+  <<"Rename module">>.
