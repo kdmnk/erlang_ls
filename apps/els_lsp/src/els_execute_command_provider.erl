@@ -46,7 +46,7 @@ handle_request({workspace_executecommand, Params}, State) ->
 execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path, NewMod]) ->
   {module, _Module} = code:ensure_loaded(api_wrangler),
   ?LOG_INFO("Renaming fun... (~p, ~p, ~p, ~p, ~p)", [Mod, Fun, Arity, Path, NewMod]),
-  Changes = api_wrangler:rename_fun(binary_to_atom(Mod), binary_to_atom(Fun), Arity, binary_to_atom(NewMod), [Path]),
+  Changes = api_wrangler:rename_fun(binary_to_atom(Mod), binary_to_atom(Fun), Arity, binary_to_atom(NewMod), [binary_to_list(Path)]),
   {ok, [{OldName, _NewName, Text}]} = Changes,
 
   Method = <<"workspace/applyEdit">>,
@@ -104,8 +104,8 @@ execute_command(<<"rename-mod">>, [Mod, Path, NewMod]) ->
   },
   els_server:send_request(Method, Params),
   [];
-execute_command(<<"extract-fun">>, [Path, StartCol, StartLine, EndCol, EndLine, NewName]) ->
-  Changes = refac_new_fun:fun_extraction(Path, {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(NewName), command, 4),
+execute_command(<<"extract-fun">>, [Path, StartPos, EndPos, NewName]) ->
+  Changes = refac_new_fun:fun_extraction(binary_to_list(Path), StartPos, EndPos, binary_to_list(NewName), command, 4),
   {ok, [{OldPath, _NewPath, Text}]} = Changes,
 
   Method = <<"workspace/applyEdit">>,
