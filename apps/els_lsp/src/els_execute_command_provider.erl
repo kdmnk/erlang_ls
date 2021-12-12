@@ -27,6 +27,7 @@ options() ->
   #{ commands => [ els_command:with_prefix(<<"rename-fun">>)
                  , els_command:with_prefix(<<"rename-mod">>)
                  , els_command:with_prefix(<<"extract-fun">>)
+                 , els_command:with_prefix(<<"comment-out-spec">>)
                  ] }.
 
 -spec handle_request(any(), state()) -> {any(), state()}.
@@ -123,6 +124,10 @@ execute_command(<<"extract-fun">>, [Path, StartPos, EndPos, NewName]) ->
     }
   },
   els_server:send_request(Method, Params),
+  [];
+
+execute_command(<<"comment-out-spec">>, [Path]) ->
+  refac_comment_out_spec:comment_out([binary_to_list(Path)]),
   [];
 
 execute_command(Command, Arguments) ->
