@@ -35,9 +35,12 @@ handle_request({document_codeaction, Params}, State) ->
 -spec code_actions(uri(), range(), code_action_context()) -> [map()].
 code_actions(Uri, Range, _Context) ->
   Path = els_uri:path(Uri),
-  Actions = [els_code_actions:actions(Id, Path, Range) || Id <- els_code_actions:enabled_actions()],
+  Actions = filter([els_code_actions:actions(Id, Path, Range) || Id <- els_code_actions:enabled_actions()]),
   case Actions of
-    [[]] -> null;
     [] -> null;
     A -> A
   end.
+
+filter([]) -> [];
+filter([null | T]) -> filter(T);
+filter([H | T]) -> [H | filter(T)].

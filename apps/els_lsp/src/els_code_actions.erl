@@ -79,7 +79,7 @@ actions(Id, Path, Range) ->
       %         end,
       CbModule:command(Path, Range);
     false ->
-      []
+      null
   end.
 
 %%==============================================================================
@@ -126,7 +126,7 @@ cb_module(Id0) ->
 %   end,
 %   Valid.
 
--spec precondition(atom(), path(), range()) -> boolean().
+-spec precondition(atom(), path(), wls_utils:range()) -> boolean().
 precondition(CbModule, Path, Range) ->
   case erlang:function_exported(CbModule, precondition, 2) of
     true ->
