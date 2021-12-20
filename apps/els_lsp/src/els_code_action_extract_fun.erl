@@ -14,20 +14,20 @@
 
 -spec command(wls_utils:path(), range()) -> map().
 command(Path, Range) ->
-  {StartPos, EndPos} = wls_utils:range(Range),
+  {{StartLine, StartCol}, {EndLine, EndCol}} = wls_utils:range(Range),
   #{title => <<"Extract function">>,
     kind => ?CODE_ACTION_KIND_REFACTOR,
     command =>
       els_command:make_command(
         <<"Extract function">>,
         <<"extract-fun">>,
-        [Path, StartPos, EndPos]
+        [Path, StartLine, StartCol, EndLine, EndCol]
       )
     }.
 
 -spec is_default() -> boolean().
 is_default() ->
-  false.
+  true.
 
 
 -spec precondition(wls_utils:path(), range()) -> boolean().

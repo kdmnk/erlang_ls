@@ -105,8 +105,8 @@ execute_command(<<"rename-mod">>, [Mod, Path, NewMod]) ->
   },
   els_server:send_request(Method, Params),
   [];
-execute_command(<<"extract-fun">>, [Path, StartPos, EndPos, NewName]) ->
-  Changes = refac_new_fun:fun_extraction(binary_to_list(Path), StartPos, EndPos, binary_to_list(NewName), command, 4),
+execute_command(<<"extract-fun">>, [Path, StartLine, StartCol, EndLine, EndCol, NewName]) ->
+  Changes = refac_new_fun:fun_extraction(binary_to_list(Path), {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(NewName), command, 4),
   {ok, [{OldPath, _NewPath, Text}]} = Changes,
 
   Method = <<"workspace/applyEdit">>,
