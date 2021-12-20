@@ -27,6 +27,7 @@ options() ->
   #{ commands => [ els_command:with_prefix(<<"rename-fun">>)
                  , els_command:with_prefix(<<"rename-mod">>)
                  , els_command:with_prefix(<<"extract-fun">>)
+                 , els_command:with_prefix(<<"generalise-fun">>)
                  ] }.
 
 -spec handle_request(any(), state()) -> {any(), state()}.
@@ -104,8 +105,29 @@ execute_command(<<"rename-mod">>, [Mod, Path, NewMod]) ->
   },
   els_server:send_request(Method, Params),
   [];
-execute_command(<<"extract-fun">>, [Path, StartCol, StartLine, EndCol, EndLine, NewName]) ->
+execute_command(<<"extract-fun">>, [Path, StartLine, StartCol, EndLine, EndCol, NewName]) ->
   Changes = refac_new_fun:fun_extraction(Path, {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(NewName), command, 4),
+  {ok, [{OldPath, _NewPath, Text}]} = Changes,
+
+  Method = <<"workspace/applyEdit">>,
+  Params = #{
+    edit => #{
+      changes => #{
+        els_uri:uri(list_to_binary(OldPath)) => [#{
+          range => #{
+            start => #{ line => 0, character => 0 },
+            'end' => #{ line => length(binary:split(Text, <<"\n">>, [global])), character => 0 }
+          },
+          newText => els_utils:to_binary(Text)
+        }]
+      }
+    }
+  },
+  els_server:send_request(Method, Params),
+  [];
+
+execute_command(<<"generalise-fun">>, [Path, StartLine, StartCol, EndLine, EndCol, ParName]) ->
+  Changes = refac_gen:generalise(Path, {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(ParName), [Path], command, 8),
   {ok, [{OldPath, _NewPath, Text}]} = Changes,
 
   Method = <<"workspace/applyEdit">>,
