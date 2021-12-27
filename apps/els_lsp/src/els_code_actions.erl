@@ -50,6 +50,7 @@
 available_actions() ->
   [ <<"rename_fun">>
   , <<"extract_fun">>
+  , <<"generalise_fun">>
   ].
 
 -spec default_actions() ->  [action_id()].

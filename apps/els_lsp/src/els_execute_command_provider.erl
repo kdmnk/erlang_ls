@@ -30,6 +30,7 @@ options() ->
                  , els_command:with_prefix(<<"rename-mod">>)
                  , els_command:with_prefix(<<"extract-fun">>)
                  , els_command:with_prefix(<<"comment-out-spec">>)
+                 , els_command:with_prefix(<<"generalise-fun">>)
                  ] }.
 
 -spec handle_request(any(), state()) -> {any(), state()}.
@@ -77,7 +78,7 @@ execute_command(<<"rename-mod">>, [Mod, Path, NewMod]) ->
       },
       apply_edit(Edit);
     {error, Err} -> 
-      ?LOG_INFO("Error renaming fun: ~p", Err)
+      ?LOG_INFO("Error renaming mod: ~p", Err)
   end,
   [];
 
@@ -92,8 +93,25 @@ execute_command(<<"extract-fun">>, [Path, StartLine, StartCol, EndLine, EndCol, 
       },
       apply_edit(Edit);
     {error, Err} -> 
-      ?LOG_INFO("Error renaming fun: ~p", Err)
+      ?LOG_INFO("Error extracting fun: ~p", Err)
   end,
+  [];
+
+execute_command(<<"generalise-fun">>, [Path, StartLine, StartCol, EndLine, EndCol, ParName]) ->
+  try %%TODO try catch not working
+    Changes = refac_gen:generalise(binary_to_list(Path), {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(ParName), [binary_to_list(Path)], wls, 8),
+    case Changes of
+      {ok, [{OldPath, _NewPath, Text}]} -> 
+        Edit = #{
+          documentChanges => [
+              text_document_edit(OldPath, Text)
+            ]
+          },
+          apply_edit(Edit);
+      Err -> 
+        ?LOG_INFO("Error generalising fun: ~p", Err)
+    end
+  catch error:Reason:StackTrace -> ?LOG_INFO("Error generalising fun: ~p, ~p", [Reason, StackTrace]) end,
   [];
 
 execute_command(<<"comment-out-spec">>, [Path]) ->
