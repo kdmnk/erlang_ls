@@ -19,11 +19,11 @@
 command(Path, Range) ->
   {StartPos, _} = wls_utils:range(Range),
   {ok, {Mod, Fun, Arity, _OccurPos, _DefPos}} = api_interface:pos_to_fun_name(binary_to_list(Path), StartPos),
-  #{title => Fun,
+  #{title => list_to_binary([<<"Rename function (">>, atom_to_binary(Fun), <<")">>]),
     kind => ?CODE_ACTION_KIND_REFACTOR,
     command =>
       els_command:make_command(
-        Mod,
+        <<"rename function">>,
         <<"rename-fun">>,
         [Mod, Fun, Arity, Path]
       )
