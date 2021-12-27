@@ -7,6 +7,10 @@
         , options/0
         ]).
 
+%%TODO change search paths to project path
+%%TODO fix TabWith
+
+
 %%==============================================================================
 %% Includes
 %%==============================================================================
@@ -45,46 +49,56 @@ handle_request({workspace_executecommand, Params}, State) ->
 execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path, NewMod]) ->
   {module, _Module} = code:ensure_loaded(api_wrangler),
   ?LOG_INFO("Renaming fun... (~p, ~p, ~p, ~p, ~p)", [Mod, Fun, Arity, Path, NewMod]),
-  Changes = api_wrangler:rename_fun(binary_to_atom(Mod), binary_to_atom(Fun), Arity, binary_to_atom(NewMod), [binary_to_list(Path)]),
-  {ok, [{OldName, _NewName, Text}]} = Changes,
-
-  Edit =#{
-    documentChanges => [
-      text_document_edit(OldName, Text)
-    ]
-  },
-  apply_edit(Edit),
+  Changes = refac_rename_fun:rename_fun_by_name(binary_to_atom(Mod), {binary_to_atom(Fun), Arity}, binary_to_atom(NewMod), [binary_to_list(Path)], wls, 4),
+  case Changes of
+    {ok, [{OldPath, _NewPath, Text}]} -> 
+      Edit = #{
+        documentChanges => [
+          text_document_edit(OldPath, Text)
+        ]
+      },
+      apply_edit(Edit);
+    {error, Err} -> 
+      ?LOG_INFO("Error renaming fun: ~p", Err)
+  end,
   [];
 
 execute_command(<<"rename-mod">>, [Mod, Path, NewMod]) ->
   {module, _Module} = code:ensure_loaded(api_wrangler),
   ?LOG_INFO("Renaming mod... (~p, ~p, ~p)", [Mod, Path, NewMod]),
-  Changes = api_wrangler:rename_mod(binary_to_atom(Mod), binary_to_atom(NewMod), [binary_to_list(Path)]),
-  {ok, [{OldName, NewName, Text}]} = Changes,
-
-  Edit = #{
-    documentChanges => [
-      rename_file(OldName, NewName),
-      text_document_edit(NewName, Text)
-    ]
-  },
-  apply_edit(Edit),
+  Changes = refac_rename_mod:rename_mod(binary_to_list(Path), binary_to_atom(NewMod), [binary_to_list(Path)], wls, 4),
+  case Changes of
+    {ok, [{OldPath, NewPath, Text}]} -> 
+      Edit = #{
+        documentChanges => [
+          rename_file(OldPath, NewPath),
+          text_document_edit(NewPath, Text)
+        ]
+      },
+      apply_edit(Edit);
+    {error, Err} -> 
+      ?LOG_INFO("Error renaming fun: ~p", Err)
+  end,
   [];
 
 execute_command(<<"extract-fun">>, [Path, StartLine, StartCol, EndLine, EndCol, NewName]) ->
-  Changes = refac_new_fun:fun_extraction(binary_to_list(Path), {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(NewName), command, 4),
-  {ok, [{OldPath, _NewPath, Text}]} = Changes,
-
-  Edit = #{
-    changes => #{
-      els_uri:uri(list_to_binary(OldPath)) => [text_edit(Text)]
-    }
-  },
-  apply_edit(Edit),
+  Changes = refac_new_fun:fun_extraction(binary_to_list(Path), {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(NewName), wls, 4),
+  case Changes of
+    {ok, [{OldName, _NewPath, Text}]} -> 
+      Edit = #{
+        changes => #{
+          els_uri:uri(list_to_binary(OldName)) => [text_edit(Text)]
+        }
+      },
+      apply_edit(Edit);
+    {error, Err} -> 
+      ?LOG_INFO("Error renaming fun: ~p", Err)
+  end,
   [];
 
 execute_command(<<"comment-out-spec">>, [Path]) ->
   refac_comment_out_spec:comment_out([binary_to_list(Path)]),
+  %% TODO use workspaceEdit
   [];
 
 execute_command(Command, Arguments) ->
