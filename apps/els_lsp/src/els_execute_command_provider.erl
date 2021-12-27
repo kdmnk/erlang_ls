@@ -66,7 +66,7 @@ execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path, NewMod]) ->
 execute_command(<<"rename-mod">>, [Mod, Path, NewMod]) ->
   {module, _Module} = code:ensure_loaded(api_wrangler),
   ?LOG_INFO("Renaming mod... (~p, ~p, ~p)", [Mod, Path, NewMod]),
-  Changes = refac_rename_mod:rename_mod(binary_to_list(Path), binary_to_atom(NewMod), [binary_to_list(Path)], wls, 4),
+  Changes = refac_rename_mod:rename_mod(binary_to_list(Path), binary_to_list(NewMod), [binary_to_list(Path)], wls, 4),
   case Changes of
     {ok, [{OldPath, NewPath, Text}]} -> 
       Edit = #{
