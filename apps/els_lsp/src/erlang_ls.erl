@@ -23,7 +23,10 @@ main(Args) ->
   ok = parse_args(Args),
   application:set_env(els_core, server, els_server),
   configure_logging(),
-  {ok, _} = application:ensure_all_started(?APP),
+  case application:ensure_all_started(?APP) of 
+    {ok, _} -> ok;
+    M -> ?LOG_INFO("Error loading modules: ~p.", [M])
+  end, 
   patch_logging(),
   configure_client_logging(),
   ok = api_wrangler:start(),

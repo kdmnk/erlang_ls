@@ -199,9 +199,9 @@ handle_request(Response, State0) ->
 -spec do_send_notification(binary(), map(), state()) -> ok.
 do_send_notification(Method, Params, State) ->
   Notification = els_protocol:notification(Method, Params),
-  ?LOG_DEBUG( "[SERVER] Sending notification [notification=~s]"
-            , [Notification]
-            ),
+  % ?LOG_DEBUG( "[SERVER] Sending notification [notification=~s]"
+  %           , [Notification]
+  %           ),
   send(Notification, State).
 
 -spec do_send_request(binary(), map(), state()) -> state().

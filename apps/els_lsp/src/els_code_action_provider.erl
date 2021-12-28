@@ -2,11 +2,11 @@
 
 -behaviour(els_provider).
 
--export([ handle_request/2
-        , is_enabled/0
-        ]).
+-export([handle_request/2, is_enabled/0]).
 
 -include("els_lsp.hrl").
+
+-include_lib("kernel/include/logger.hrl").
 
 -type state() :: any().
 
@@ -15,13 +15,15 @@
 %%==============================================================================
 
 -spec is_enabled() -> boolean().
-is_enabled() -> true.
+is_enabled() ->
+  true.
 
 -spec handle_request(any(), state()) -> {any(), state()}.
 handle_request({document_codeaction, Params}, State) ->
-  #{ <<"textDocument">> := #{ <<"uri">> := Uri}
-   , <<"range">>        := RangeLSP
-   , <<"context">>      := Context } = Params,
+  #{<<"textDocument">> := #{<<"uri">> := Uri},
+    <<"range">> := RangeLSP,
+    <<"context">> := Context} =
+    Params,
   Result = code_actions(Uri, RangeLSP, Context),
   {Result, State}.
 
@@ -29,26 +31,16 @@ handle_request({document_codeaction, Params}, State) ->
 %% Internal Functions
 %%==============================================================================
 
-
 %% @doc Result: `(Command | CodeAction)[] | null'
 -spec code_actions(uri(), range(), code_action_context()) -> [map()].
 code_actions(Uri, Range, _Context) ->
-  %% #{ <<"diagnostics">> := Diagnostics } = Context,
+  Path = els_uri:path(Uri),
+  Actions = filter([els_code_actions:actions(Id, Path, Range) || Id <- els_code_actions:enabled_actions()]),
+  case Actions of
+    [] -> null;
+    A -> A
+  end.
 
-  #{ <<"start">> := #{ <<"character">> := _StartCol
-                     , <<"line">>      := StartLine }
-   , <<"end">>   := #{ <<"character">> := _EndCol
-                     , <<"line">>      := EndLine }
-   } = Range,
-  
-  [#{ title => <<"Do something">>
-    , kind => ?CODE_ACTION_KIND_REFACTOR
-    , command => 
-       els_command:make_command( <<"Do something">>
-                               , <<"code_action_do_something">>
-                               , [#{ uri   => Uri
-                                   , from  => StartLine
-                                   , to    => EndLine }])
-   }].
-
-%%------------------------------------------------------------------------------
+filter([]) -> [];
+filter([null | T]) -> filter(T);
+filter([H | T]) -> [H | filter(T)].

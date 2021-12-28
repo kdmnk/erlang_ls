@@ -229,18 +229,6 @@
                            , value := binary()
                            }.
 
-%%------------------------------------------------------------------------------
-%% Document Highlight Kind
-%%------------------------------------------------------------------------------
-
--define(DOCUMENT_HIGHLIGHT_KIND_TEXT,  1).
--define(DOCUMENT_HIGHLIGHT_KIND_READ,  2).
--define(DOCUMENT_HIGHLIGHT_KIND_WRITE, 3).
-
--type document_highlight_kind() :: ?DOCUMENT_HIGHLIGHT_KIND_TEXT
-                                 | ?DOCUMENT_HIGHLIGHT_KIND_READ
-                                 | ?DOCUMENT_HIGHLIGHT_KIND_WRITE.
-
 %%==============================================================================
 %% Actual Protocol
 %%==============================================================================
@@ -348,19 +336,6 @@
               , willSaveWaitUntil => boolean()
               , didSave => boolean()
               }
-         , completion =>
-             #{ dynamicRegistration => boolean()
-              , completionItem =>
-                  #{ snippetSupport => boolean()
-                   , commitCharactersSupport => boolean()
-                   , documentationFormat => markup_kind()
-                   , deprecatedSupport => boolean()
-                   }
-              , completionItemKind =>
-                  #{ valueSet => [completion_item_kind()]
-                   }
-              , contextSupport => boolean()
-              }
          , hover =>
              #{ dynamicRegistration => boolean()
               , contentFormat => [markup_kind()]
@@ -371,34 +346,13 @@
                   #{ documentationFormat => [markup_kind()]
                    }
               }
-         , references =>
-             #{ dynamicRegistration => boolean()
-              }
-         , documentHighlight =>
-             #{ dynamicRegistration => boolean()
-              }
          , documentSymbol =>
              #{ dynamicRegistration => boolean()
               , symbolKind =>
                   #{ valueSet => [symbol_kind()]
                    }
               }
-         , formatting =>
-             #{ dynamicRegistration => boolean()
-              }
-         , rangeFormatting =>
-             #{ dynamicRegistration => boolean()
-              }
-         , onTypeFormatting =>
-             #{ dynamicRegistration => boolean()
-              }
-         , definition =>
-             #{ dynamicRegistration => boolean()
-              }
          , typeDefinition =>
-             #{ dynamicRegistration => boolean()
-              }
-         , implementation =>
              #{ dynamicRegistration => boolean()
               }
          , codeAction =>
@@ -417,12 +371,6 @@
               }
          , colorProvider =>
              #{ dynamicRegistration => boolean()
-              }
-         , rename =>
-             #{ dynamicRegistration => boolean()
-              }
-         , publishDiagnostics =>
-             #{ relatedInformation => boolean()
               }
          , foldingRange =>
              #{ dynamicRegistration => boolean()
@@ -537,20 +485,6 @@
                                   , active_parameters => number()
                                   }.
 
-%%------------------------------------------------------------------------------
-%% Formatting
-%%------------------------------------------------------------------------------
--type formatting_options() :: #{ tabSize           := integer()
-                               , insertSpaces      := boolean()
-                               %% Spec says further properties must
-                               %% meet the following signature
-                               %%   [key: string]: boolean | number | string;
-                               }.
-
--type document_ontypeformatting_options() :: false |
-       #{ first_trigger_character := string()
-        , more_trigger_character  => string()
-        }.
 
 %%------------------------------------------------------------------------------
 %% Code Actions

@@ -87,27 +87,6 @@ handle_request({initialized, _Params}, State) ->
   els_distribution_server:start_distribution(NodeName),
   ?LOG_INFO("Started distribution for: [~p]", [NodeName]),
 
-  case els_bsp_provider:maybe_start(RootUri) of
-    {error, Reason} ->
-      case els_config:get(bsp_enabled) of
-        true ->
-          ?LOG_ERROR( "BSP server startup failed, shutting down. [reason=~p]"
-                    , [Reason]
-                    ),
-          els_utils:halt(1);
-        auto ->
-          ?LOG_INFO("BSP server startup failed. [reason=~p]", [Reason]),
-          ok
-      end;
-    _ ->
-      ok
-  end,
-  case els_bsp_provider:info(is_running) of
-    true ->  %% The BSP provider will start indexing when it's ready
-      ok;
-    false -> %% We need to start indexing here
-      els_indexing:maybe_start()
-  end,
 
   {null, State};
 handle_request({shutdown, _Params}, State) ->
@@ -134,42 +113,19 @@ server_capabilities() ->
              , change    => els_text_synchronization:sync_mode()
              , save      => #{includeText => false}
              }
-        , hoverProvider =>
-            els_hover_provider:is_enabled()
-        , completionProvider =>
-            #{ resolveProvider => true
-             , triggerCharacters =>
-                 els_completion_provider:trigger_characters()
-             }
-        , definitionProvider =>
-            els_definition_provider:is_enabled()
-        , referencesProvider =>
-            els_references_provider:is_enabled()
-        , documentHighlightProvider =>
-            els_document_highlight_provider:is_enabled()
         , documentSymbolProvider =>
             els_document_symbol_provider:is_enabled()
         , workspaceSymbolProvider =>
             els_workspace_symbol_provider:is_enabled()
         , codeActionProvider =>
             els_code_action_provider:is_enabled()
-        , documentFormattingProvider =>
-            els_formatting_provider:is_enabled_document()
-        , documentRangeFormattingProvider =>
-            els_formatting_provider:is_enabled_range()
         , foldingRangeProvider =>
             els_folding_range_provider:is_enabled()
-        , implementationProvider =>
-            els_implementation_provider:is_enabled()
         , executeCommandProvider =>
             els_execute_command_provider:options()
         , codeLensProvider =>
             els_code_lens_provider:options()
-        , renameProvider =>
-            els_rename_provider:is_enabled()
-        , callHierarchyProvider =>
-            els_call_hierarchy_provider:is_enabled()
-        },
+       },
      serverInfo =>
        #{ name    => <<"Erlang LS">>
         , version => els_utils:to_binary(Version)

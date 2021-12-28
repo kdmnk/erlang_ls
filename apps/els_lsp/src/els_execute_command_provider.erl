@@ -7,13 +7,15 @@
         , options/0
         ]).
 
+%%TODO change search paths to project path
+%%TODO fix TabWith
+
+
 %%==============================================================================
 %% Includes
 %%==============================================================================
 -include("els_lsp.hrl").
 -include_lib("kernel/include/logger.hrl").
-
--type state() :: any().
 
 %%==============================================================================
 %% els_provider functions
@@ -24,21 +26,19 @@ is_enabled() -> true.
 
 -spec options() -> map().
 options() ->
-  #{ commands => [ els_command:with_prefix(<<"replace-lines">>)
+  #{ commands => [ els_command:with_prefix(<<"rename-fun">>)
                  , els_command:with_prefix(<<"rename-mod">>)
-                 , els_command:with_prefix(<<"ct-run-test">>)
-                 , els_command:with_prefix(<<"show-behaviour-usages">>)
-                 , els_command:with_prefix(<<"suggest-spec">>)
-                 , els_command:with_prefix(<<"function-references">>)
-                 , els_command:with_prefix(<<"code_action_do_something">>)
+                 , els_command:with_prefix(<<"extract-fun">>)
+                 , els_command:with_prefix(<<"comment-out-spec">>)
+                 , els_command:with_prefix(<<"generalise-fun">>)
                  ] }.
 
 -spec handle_request(any(), state()) -> {any(), state()}.
 handle_request({workspace_executecommand, Params}, State) ->
   #{ <<"command">> := PrefixedCommand } = Params,
   Arguments = maps:get(<<"arguments">>, Params, []),
-  Result = execute_command( els_command:without_prefix(PrefixedCommand)
-                          , Arguments),
+  Result = execute_command(els_command:without_prefix(PrefixedCommand),
+                           Arguments),
   {Result, State}.
 
 %%==============================================================================
@@ -46,56 +46,131 @@ handle_request({workspace_executecommand, Params}, State) ->
 %%==============================================================================
 
 -spec execute_command(els_command:command_id(), [any()]) -> [map()].
-execute_command(<<"code_action_do_something">>
-               , [#{ <<"uri">>   := Uri
-                   , <<"from">>  := LineFrom
-                   , <<"to">>    := LineTo }]) ->
-  els_server:send_notification(<<"window/showMessage">>,
-    #{ type => ?MESSAGE_TYPE_INFO,
-        message => <<"Doing something">>
-      }),
-  ?LOG_INFO("code_action_do_something: ~p, ~p, ~p", [Uri, LineFrom, LineTo]),
-  [];
-% execute_command(<<"rename-fun">>, [Uri, POI]) ->
-%   ?LOG_INFO("rename fun: ~p, ~p", [Uri, POI]),
-%   els_server:send_notification(<<"window/showMessage">>,
-%                                #{ type => ?MESSAGE_TYPE_INFO,
-%                                   message => <<"OK">>
-%                                 }),
-%   [];
-execute_command(<<"rename-mod">>, [Module, Path]) ->
+
+execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path, NewMod]) ->
   {module, _Module} = code:ensure_loaded(api_wrangler),
-  _Result = api_wrangler:rename_mod(binary_to_atom(Module), newmodule, [binary_to_list(Path)]),  
-  ?LOG_INFO("Rename mod result: ~p, ~p", [Module, Path]),
-  els_server:send_notification(<<"window/showMessage">>,
-                               #{ type => ?MESSAGE_TYPE_INFO,
-                                  message => <<"Hello">>
-                                }),
+  ?LOG_INFO("Renaming fun... (~p, ~p, ~p, ~p, ~p)", [Mod, Fun, Arity, Path, NewMod]),
+  Changes = refac_rename_fun:rename_fun_by_name(binary_to_atom(Mod), {binary_to_atom(Fun), Arity}, binary_to_atom(NewMod), [binary_to_list(Path)], wls, 4),
+  case Changes of
+    {ok, [{OldPath, _NewPath, Text}]} -> 
+      Edit = #{
+        documentChanges => [
+          text_document_edit(OldPath, Text)
+        ]
+      },
+      apply_edit(Edit);
+    {error, Err} -> 
+      ?LOG_INFO("Error renaming fun: ~p", Err)
+  end,
   [];
-execute_command(<<"ct-run-test">>, [Params]) ->
-  els_command_ct_run_test:execute(Params),
+
+execute_command(<<"rename-mod">>, [Mod, Path, NewMod]) ->
+  {module, _Module} = code:ensure_loaded(api_wrangler),
+  ?LOG_INFO("Renaming mod... (~p, ~p, ~p)", [Mod, Path, NewMod]),
+  Changes = refac_rename_mod:rename_mod(binary_to_list(Path), binary_to_list(NewMod), [binary_to_list(Path)], wls, 4),
+  case Changes of
+    {ok, [{OldPath, NewPath, Text}]} -> 
+      Edit = #{
+        documentChanges => [
+          rename_file(OldPath, NewPath),
+          text_document_edit(NewPath, Text)
+        ]
+      },
+      apply_edit(Edit);
+    {error, Err} -> 
+      ?LOG_INFO("Error renaming mod: ~p", Err)
+  end,
   [];
-execute_command(<<"function-references">>, [_Params]) ->
+
+execute_command(<<"extract-fun">>, [Path, StartLine, StartCol, EndLine, EndCol, NewName]) ->
+  Changes = refac_new_fun:fun_extraction(binary_to_list(Path), {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(NewName), wls, 4),
+  case Changes of
+    {ok, [{OldName, _NewPath, Text}]} -> 
+      Edit = #{
+        changes => #{
+          els_uri:uri(list_to_binary(OldName)) => [text_edit(Text)]
+        }
+      },
+      apply_edit(Edit);
+    {error, Err} -> 
+      ?LOG_INFO("Error extracting fun: ~p", Err)
+  end,
   [];
-execute_command(<<"show-behaviour-usages">>, [_Params]) ->
+
+execute_command(<<"generalise-fun">>, [Path, StartLine, StartCol, EndLine, EndCol, ParName]) ->
+  try %%TODO try catch not working
+    Changes = refac_gen:generalise(binary_to_list(Path), {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(ParName), [binary_to_list(Path)], wls, 8),
+    case Changes of
+      {ok, [{OldPath, _NewPath, Text}]} -> 
+        Edit = #{
+          documentChanges => [
+              text_document_edit(OldPath, Text)
+            ]
+          },
+          apply_edit(Edit);
+      Err -> 
+        ?LOG_INFO("Error generalising fun: ~p", Err)
+    end
+  catch error:Reason:StackTrace -> ?LOG_INFO("Error generalising fun: ~p, ~p", [Reason, StackTrace]) end,
   [];
-execute_command(<<"suggest-spec">>, []) ->
+
+execute_command(<<"comment-out-spec">>, [Path]) ->
+  refac_comment_out_spec:comment_out([binary_to_list(Path)]),
+  %% TODO use workspaceEdit
   [];
-execute_command(<<"suggest-spec">>, [#{ <<"uri">> := Uri
-                                      , <<"line">> := Line
-                                      , <<"spec">> := Spec
-                                      }]) ->
-  Method = <<"workspace/applyEdit">>,
-  {ok, #{text := Text}} = els_utils:lookup_document(Uri),
-  LineText = els_text:line(Text, Line - 1),
-  NewText = <<Spec/binary, "\n", LineText/binary, "\n">>,
-  Params =
-    #{ edit =>
-         els_text_edit:edit_replace_text(Uri, NewText, Line - 1, Line)
-     },
-  els_server:send_request(Method, Params),
-  [];
+
 execute_command(Command, Arguments) ->
-  ?LOG_INFO("Unsupported command: [Command=~p] [Arguments=~p]"
-           , [Command, Arguments]),
+  ?LOG_INFO("Unsupported command: [Command=~p] [Arguments=~p]",
+             [Command, Arguments]),
   [].
+
+
+%% HElPER FUNCTIONS
+
+-type state() :: any().
+-type refactor_type() :: binary().
+-type optionalVersionedTextDocumentIdentifier() :: #{'uri' := uri(), 'version' := integer() | null }.
+-type textEdit() :: #{'range' := range(), 'newText' := binary() }.
+-type textDocumentEdit() :: #{'textDocument' := optionalVersionedTextDocumentIdentifier(), 'edits' := [textEdit()]} | #{'changes' := #{uri() := [textEdit()]}}.
+-type workspaceEdit() :: #{'documentChanges' := textDocumentEdit() | renameFile() }.
+-type renameFile() :: #{'kind':=refactor_type(),  'newUri':=uri(),  'oldUri':=uri()}.
+
+
+-spec apply_edit(workspaceEdit()) -> ok.
+apply_edit(Body) -> 
+  Method = <<"workspace/applyEdit">>,
+  Params = #{
+    edit => Body
+  },
+  els_server:send_request(Method, Params).
+
+
+-spec rename_file(wls_utils:path(), wls_utils:path()) -> renameFile().
+rename_file(OldName, NewName) ->
+  #{
+    kind => <<"rename">>,
+    oldUri => els_uri:uri(list_to_binary(OldName)),
+    newUri => els_uri:uri(list_to_binary(NewName))
+  }.
+
+-spec text_document_edit(wls_utils:path(), binary()) -> textDocumentEdit().
+text_document_edit(Name, Text) ->
+  #{
+  textDocument =>
+    #{
+      uri => els_uri:uri(list_to_binary(Name)),
+      version => null
+    },
+  edits =>
+    [
+      text_edit(Text)
+    ]
+  }.
+
+-spec text_edit(binary()) ->  textEdit().
+text_edit(Text) -> #{
+  range =>
+    #{ start => #{ line => 0, character => 0},
+      'end' => #{ line => length(binary:split(Text, <<"\n">>, [global])), character => 0}
+    },
+  newText => els_utils:to_binary(Text)}.

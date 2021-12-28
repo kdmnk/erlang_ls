@@ -1,8 +1,4 @@
-%%==============================================================================
-%% Code Lens: server_info
-%%==============================================================================
-
--module(els_code_lens_rename_mod).
+-module(els_code_lens_comment_out_spec).
 
 -behaviour(els_code_lens).
 -export([command/3
@@ -16,20 +12,19 @@
                  els_command:command().
 command(Document, _POI, _State) ->
   Title = title(),
-  CommandId = <<"rename-mod">>,
+  CommandId = <<"comment-out-spec">>,
   #{uri := Uri} = Document,
-  M = els_uri:module(Uri),
   P = els_uri:path(Uri),
-  els_command:make_command(Title, CommandId, [M, P]).
+  els_command:make_command(Title, CommandId, [P]).
 
 -spec is_default() -> boolean().
 is_default() ->
   true.
 
 -spec pois(els_dt_document:item()) -> [poi()].
-pois(Document) ->
-  els_dt_document:pois(Document, [module]).
+pois(_Document) ->
+  [els_poi:new(#{from => {1, 1}, to => {2, 1}}, dummy, dummy)].
 
 -spec title() -> binary().
 title() ->
-  <<"Rename module">>.
+  <<"Comment out spec">>.
