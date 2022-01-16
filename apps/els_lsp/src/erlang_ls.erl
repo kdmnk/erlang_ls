@@ -19,14 +19,14 @@ main(Args) ->
   application:load(getopt),
   application:load(els_core),
   application:load(?APP),
-  ok = application:load(wrangler),
   ok = parse_args(Args),
   application:set_env(els_core, server, els_server),
   configure_logging(),
-  case application:ensure_all_started(?APP) of 
+  case application:ensure_all_started(?APP) of
     {ok, _} -> ok;
     M -> ?LOG_INFO("Error loading modules: ~p.", [M])
-  end, 
+  end,
+  ok = application:load(wrangler),
   patch_logging(),
   configure_client_logging(),
   ok = api_wrangler:start(),
@@ -70,6 +70,12 @@ opt_spec_list() ->
     , {string, "stdio"}
     , "DEPRECATED. Only the \"stdio\" transport is currently supported."
     }
+  ,  { wrangler_dir
+    , $w
+    , "wrangler-dir"
+    , {string, "undefined"}
+    , "Directory where the wrangler executables are."
+    }
  ,  { log_dir
     , $d
     , "log-dir"
@@ -97,6 +103,12 @@ set(transport, _Transport) ->
   ok;
 set(log_dir, Dir) ->
   application:set_env(els_core, log_dir, Dir);
+set(wrangler_dir, "undefined") -> ?LOG_INFO("wrangler path not specified");
+set(wrangler_dir, Dir) ->
+  case code:add_path(Dir) of
+    true -> ?LOG_INFO("Wrangler path successfully added");
+    {error, bad_directory} -> ?LOG_INFO("~p is not a directory.", [Dir])
+  end;
 set(log_level, Level) ->
   application:set_env(els_core, log_level, list_to_atom(Level));
 set(port_old, Port) ->
