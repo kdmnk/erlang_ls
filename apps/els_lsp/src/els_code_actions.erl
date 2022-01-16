@@ -53,6 +53,7 @@ available_actions() ->
   , <<"new_macro">>
   , <<"extract_fun">>
   , <<"generalise_fun">>
+  , <<"fold">>
   ].
 
 -spec default_actions() ->  [action_id()].

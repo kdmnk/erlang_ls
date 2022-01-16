@@ -33,8 +33,12 @@ options() ->
                  , els_command:with_prefix(<<"move-fun">>)
                  , els_command:with_prefix(<<"comment-out-spec">>)
                  , els_command:with_prefix(<<"generalise-fun">>)
+<<<<<<< HEAD
                  , els_command:with_prefix(<<"new-var">>)
                  , els_command:with_prefix(<<"new-macro">>)
+=======
+                 , els_command:with_prefix(<<"fold">>)
+>>>>>>> basics of folding
                  ] }.
 
 -spec handle_request(any(), state()) -> {any(), state()}.
@@ -64,7 +68,11 @@ execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path, NewMod]) ->
       },
       apply_edit(Edit);
     {error, Err} ->
+<<<<<<< HEAD
       ?LOG_INFO("Error renaming fun: ~p", [Err])
+=======
+      ?LOG_INFO("Error renaming fun: ~p", Err)
+>>>>>>> basics of folding
   end,
   [];
 
@@ -82,6 +90,7 @@ execute_command(<<"rename-mod">>, [Mod, Path, NewMod]) ->
       },
       apply_edit(Edit);
     {error, Err} ->
+<<<<<<< HEAD
       ?LOG_INFO("Error renaming mod: ~p", [Err])
   end,
   [];
@@ -101,6 +110,9 @@ execute_command(<<"copy-mod">>, [Mod, Path, NewMod]) ->
       apply_edit(Edit);
     {error, Err} ->
       ?LOG_INFO("Error renaming mod: ~p", [Err])
+=======
+      ?LOG_INFO("Error renaming mod: ~p", Err)
+>>>>>>> basics of folding
   end,
   [];
 
@@ -115,6 +127,7 @@ execute_command(<<"extract-fun">>, [Path, StartLine, StartCol, EndLine, EndCol, 
       },
       apply_edit(Edit);
     {error, Err} ->
+<<<<<<< HEAD
       ?LOG_INFO("Error extracting fun: ~p", [Err])
   end,
   [];
@@ -131,6 +144,9 @@ execute_command(<<"new-macro">>, [Path, StartLine, StartCol, EndLine, EndCol, Ne
       apply_edit(Edit);
     {error, Err} ->
       ?LOG_INFO("Error new macro: ~p", [Err])
+=======
+      ?LOG_INFO("Error extracting fun: ~p", Err)
+>>>>>>> basics of folding
   end,
   [];
 
@@ -185,6 +201,29 @@ execute_command(<<"move-fun">>, [Module, _Path, Function, Arity, NewPath]) ->
       apply_edit(Edit);
     {error, Err} ->
       ?LOG_INFO("Error moving fun: ~p", [Err])
+  end,
+  [];
+execute_command(<<"fold">>, [Path, StartLine, StartCol, _EndLine, _EndCol]) ->
+  {ok, {AnnAST, _Info}} = wrangler_ast_server:parse_annotate_file(binary_to_list(Path), true),
+  case refac_fold_expression:pos_to_fun_clause(AnnAST, {StartLine, StartCol}) of
+	  {ok, {Mod, FunName, _Arity, FunClauseDef, _ClauseIndex}} ->
+	    Candidates = refac_fold_expression:search_candidate_exprs(AnnAST, {Mod, Mod}, FunName, FunClauseDef),
+      ?LOG_INFO("Candidates: ~p ", [Candidates]),
+      case Candidates of
+        [] -> ok;
+        Candidates ->
+          TemporaryFile = binary_to_list(Path) ++ ".twf",
+          %Text = lists:concat(Candidates),
+          Edit = #{
+            documentChanges => [
+              create_file(TemporaryFile),
+              text_document_edit(TemporaryFile, <<"asd">>)
+            ]
+          },
+          apply_edit(Edit)
+      end;
+
+    _ -> ?LOG_INFO("Error")
   end,
   [];
 
