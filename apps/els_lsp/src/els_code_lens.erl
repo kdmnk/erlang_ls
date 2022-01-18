@@ -57,6 +57,7 @@
 -spec available_lenses() -> [lens_id()].
 available_lenses() ->
   [ <<"rename-mod">>
+  , <<"copy-mod">>
   , <<"comment-out-spec">> ].
 
 -spec default_lenses() -> [lens_id()].

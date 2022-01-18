@@ -49,6 +49,7 @@
 -spec available_actions() -> [action_id()].
 available_actions() ->
   [ <<"rename_fun">>
+  , <<"new_var">>
   , <<"extract_fun">>
   , <<"generalise_fun">>
   ].

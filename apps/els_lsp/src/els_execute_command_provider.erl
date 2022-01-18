@@ -28,9 +28,11 @@ is_enabled() -> true.
 options() ->
   #{ commands => [ els_command:with_prefix(<<"rename-fun">>)
                  , els_command:with_prefix(<<"rename-mod">>)
+                 , els_command:with_prefix(<<"copy-mod">>)
                  , els_command:with_prefix(<<"extract-fun">>)
                  , els_command:with_prefix(<<"comment-out-spec">>)
                  , els_command:with_prefix(<<"generalise-fun">>)
+                 , els_command:with_prefix(<<"new-var">>)
                  ] }.
 
 -spec handle_request(any(), state()) -> {any(), state()}.
@@ -52,15 +54,15 @@ execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path, NewMod]) ->
   ?LOG_INFO("Renaming fun... (~p, ~p, ~p, ~p, ~p)", [Mod, Fun, Arity, Path, NewMod]),
   Changes = refac_rename_fun:rename_fun_by_name(binary_to_atom(Mod), {binary_to_atom(Fun), Arity}, binary_to_atom(NewMod), [binary_to_list(Path)], wls, 4),
   case Changes of
-    {ok, [{OldPath, _NewPath, Text}]} -> 
+    {ok, [{OldPath, _NewPath, Text}]} ->
       Edit = #{
         documentChanges => [
           text_document_edit(OldPath, Text)
         ]
       },
       apply_edit(Edit);
-    {error, Err} -> 
-      ?LOG_INFO("Error renaming fun: ~p", Err)
+    {error, Err} ->
+      ?LOG_INFO("Error renaming fun: ~p", [Err])
   end,
   [];
 
@@ -69,7 +71,7 @@ execute_command(<<"rename-mod">>, [Mod, Path, NewMod]) ->
   ?LOG_INFO("Renaming mod... (~p, ~p, ~p)", [Mod, Path, NewMod]),
   Changes = refac_rename_mod:rename_mod(binary_to_list(Path), binary_to_list(NewMod), [binary_to_list(Path)], wls, 4),
   case Changes of
-    {ok, [{OldPath, NewPath, Text}]} -> 
+    {ok, [{OldPath, NewPath, Text}]} ->
       Edit = #{
         documentChanges => [
           rename_file(OldPath, NewPath),
@@ -77,23 +79,41 @@ execute_command(<<"rename-mod">>, [Mod, Path, NewMod]) ->
         ]
       },
       apply_edit(Edit);
-    {error, Err} -> 
-      ?LOG_INFO("Error renaming mod: ~p", Err)
+    {error, Err} ->
+      ?LOG_INFO("Error renaming mod: ~p", [Err])
+  end,
+  [];
+
+execute_command(<<"copy-mod">>, [Mod, Path, NewMod]) ->
+  {module, _Module} = code:ensure_loaded(api_wrangler),
+  ?LOG_INFO("Renaming mod... (~p, ~p, ~p)", [Mod, Path, NewMod]),
+  Changes = refac_copy_mod:copy_mod(binary_to_list(Path), binary_to_list(NewMod), [binary_to_list(Path)], wls, 4),
+  case Changes of
+    {ok, [{_OldPath, NewPath, Text}]} ->
+      Edit = #{
+        documentChanges => [
+          create_file(NewPath),
+          text_document_edit(NewPath, Text)
+        ]
+      },
+      apply_edit(Edit);
+    {error, Err} ->
+      ?LOG_INFO("Error renaming mod: ~p", [Err])
   end,
   [];
 
 execute_command(<<"extract-fun">>, [Path, StartLine, StartCol, EndLine, EndCol, NewName]) ->
   Changes = refac_new_fun:fun_extraction(binary_to_list(Path), {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(NewName), wls, 4),
   case Changes of
-    {ok, [{OldName, _NewPath, Text}]} -> 
+    {ok, [{OldName, _NewPath, Text}]} ->
       Edit = #{
         changes => #{
           els_uri:uri(list_to_binary(OldName)) => [text_edit(Text)]
         }
       },
       apply_edit(Edit);
-    {error, Err} -> 
-      ?LOG_INFO("Error extracting fun: ~p", Err)
+    {error, Err} ->
+      ?LOG_INFO("Error extracting fun: ~p", [Err])
   end,
   [];
 
@@ -101,17 +121,32 @@ execute_command(<<"generalise-fun">>, [Path, StartLine, StartCol, EndLine, EndCo
   try %%TODO try catch not working
     Changes = refac_gen:generalise(binary_to_list(Path), {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(ParName), [binary_to_list(Path)], wls, 8),
     case Changes of
-      {ok, [{OldPath, _NewPath, Text}]} -> 
+      {ok, [{OldPath, _NewPath, Text}]} ->
         Edit = #{
           documentChanges => [
               text_document_edit(OldPath, Text)
             ]
           },
           apply_edit(Edit);
-      Err -> 
-        ?LOG_INFO("Error generalising fun: ~p", Err)
+      Err ->
+        ?LOG_INFO("Error generalising fun: ~p", [Err])
     end
   catch error:Reason:StackTrace -> ?LOG_INFO("Error generalising fun: ~p, ~p", [Reason, StackTrace]) end,
+  [];
+
+execute_command(<<"new-var">>, [Path, StartLine, StartCol, EndLine, EndCol, NewName]) ->
+  Changes = refac_intro_new_var:intro_new_var(binary_to_list(Path), {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(NewName), [binary_to_list(Path)], wls, 4),
+  case Changes of
+    {ok, [{OldName, _NewPath, Text}]} ->
+      Edit = #{
+        changes => #{
+          els_uri:uri(list_to_binary(OldName)) => [text_edit(Text)]
+        }
+      },
+      apply_edit(Edit);
+    {error, Err} ->
+      ?LOG_INFO("Error introducing new variable: ~p", [Err])
+  end,
   [];
 
 execute_command(<<"comment-out-spec">>, [Path]) ->
@@ -133,17 +168,24 @@ execute_command(Command, Arguments) ->
 -type textEdit() :: #{'range' := range(), 'newText' := binary() }.
 -type textDocumentEdit() :: #{'textDocument' := optionalVersionedTextDocumentIdentifier(), 'edits' := [textEdit()]} | #{'changes' := #{uri() := [textEdit()]}}.
 -type workspaceEdit() :: #{'documentChanges' := textDocumentEdit() | renameFile() }.
+-type createFile() :: #{'kind':=refactor_type(),  'uri':=uri()}.
 -type renameFile() :: #{'kind':=refactor_type(),  'newUri':=uri(),  'oldUri':=uri()}.
 
 
 -spec apply_edit(workspaceEdit()) -> ok.
-apply_edit(Body) -> 
+apply_edit(Body) ->
   Method = <<"workspace/applyEdit">>,
   Params = #{
     edit => Body
   },
   els_server:send_request(Method, Params).
 
+-spec create_file(wls_utils:path()) -> createFile().
+create_file(Name) ->
+  #{
+    kind => <<"create">>,
+    uri => els_uri:uri(list_to_binary(Name))
+  }.
 
 -spec rename_file(wls_utils:path(), wls_utils:path()) -> renameFile().
 rename_file(OldName, NewName) ->
