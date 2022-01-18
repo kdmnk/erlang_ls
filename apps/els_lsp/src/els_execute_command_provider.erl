@@ -30,6 +30,7 @@ options() ->
                  , els_command:with_prefix(<<"rename-mod">>)
                  , els_command:with_prefix(<<"copy-mod">>)
                  , els_command:with_prefix(<<"extract-fun">>)
+                 , els_command:with_prefix(<<"move-fun">>)
                  , els_command:with_prefix(<<"comment-out-spec">>)
                  , els_command:with_prefix(<<"generalise-fun">>)
                  , els_command:with_prefix(<<"new-var">>)
@@ -146,6 +147,28 @@ execute_command(<<"new-var">>, [Path, StartLine, StartCol, EndLine, EndCol, NewN
       apply_edit(Edit);
     {error, Err} ->
       ?LOG_INFO("Error introducing new variable: ~p", [Err])
+  end,
+  [];
+execute_command(<<"move-fun">>, [Module, _Path, Function, Arity, NewPath]) ->
+  Changes = refac_move_fun:move_fun_by_name(binary_to_atom(Module), {binary_to_atom(Function), Arity}, binary_to_list(NewPath), ["/Users/domi/Documents/GitHub/vscode/erlang_ls/apps/els_lsp"], wls, 4),
+  case Changes of
+    {ok, [{File1, _File1, Text}]} ->
+      Edit = #{
+        changes => #{
+          els_uri:uri(list_to_binary(File1)) => [text_edit(Text)]
+        }
+      },
+      apply_edit(Edit);
+    {ok, [{File1, _File1, Text}, {File2, _File2, Text2}]} ->
+      Edit = #{
+        changes => #{
+          els_uri:uri(list_to_binary(File1)) => [text_edit(Text)],
+          els_uri:uri(list_to_binary(File2)) => [text_edit(Text2)]
+        }
+      },
+      apply_edit(Edit);
+    {error, Err} ->
+      ?LOG_INFO("Error moving fun: ~p", [Err])
   end,
   [];
 
