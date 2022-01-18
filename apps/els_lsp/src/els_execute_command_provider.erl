@@ -206,18 +206,24 @@ execute_command(<<"move-fun">>, [Module, _Path, Function, Arity, NewPath]) ->
 execute_command(<<"fold">>, [Path, StartLine, StartCol, _EndLine, _EndCol]) ->
   {ok, {AnnAST, _Info}} = wrangler_ast_server:parse_annotate_file(binary_to_list(Path), true),
   case refac_fold_expression:pos_to_fun_clause(AnnAST, {StartLine, StartCol}) of
-	  {ok, {Mod, FunName, _Arity, FunClauseDef, _ClauseIndex}} ->
+	  {ok, {Mod, FunName, Arity, FunClauseDef, _ClauseIndex}} ->
 	    Candidates = refac_fold_expression:search_candidate_exprs(AnnAST, {Mod, Mod}, FunName, FunClauseDef),
       ?LOG_INFO("Candidates: ~p ", [Candidates]),
+      {ok, OriginalText} = file:read_file(Path),
+      Lines = binary:split(OriginalText, <<"\n">>, [global]),
       case Candidates of
         [] -> ok;
         Candidates ->
           TemporaryFile = binary_to_list(Path) ++ ".twf",
-          %Text = lists:concat(Candidates),
+          OriginalFile = binary_to_list(Path),
+          Form = [preview_candidate(C, Lines) || C <- Candidates],
+          ?LOG_INFO("Form: ~p", [Form]),
           Edit = #{
             documentChanges => [
-              create_file(TemporaryFile),
-              text_document_edit(TemporaryFile, <<"asd">>)
+              rename_file(OriginalFile, TemporaryFile), %% Temporary file will be in focus
+              create_file(OriginalFile), %% Recreate the original file
+              text_document_edit(OriginalFile, OriginalText), %% Copy the original file content
+              text_document_edit(TemporaryFile, erlang:iolist_to_binary(Form)) %% Fill the temporary file with the form
             ]
           },
           apply_edit(Edit)
@@ -248,6 +254,22 @@ execute_command(Command, Arguments) ->
 -type workspaceEdit() :: #{'documentChanges' := textDocumentEdit() | renameFile() }.
 -type createFile() :: #{'kind':=refactor_type(),  'uri':=uri()}.
 -type renameFile() :: #{'kind':=refactor_type(),  'newUri':=uri(),  'oldUri':=uri()}.
+
+
+preview_candidate({{{StartLine, StartCol}, {EndLine, EndCol}}, _IDK1, _IDK2}, Lines) ->
+  Preview = get_preview(StartLine, EndLine, 1, Lines),
+  Header = list_to_binary(lists:concat([StartLine, ",", StartCol, "-", EndLine, ",", EndCol, "\n"])),
+  <<"%!fold:fun_to_fold/0:", Header/binary, Preview/binary>>.
+
+get_preview(From, To, Current, [<<>>|T]) ->
+  get_preview(From, To, Current+1, T);
+get_preview(From, To, Current, [_|T]) when Current < From-2 ->
+  get_preview(From, To, Current+1, T);
+get_preview(From, To, Current, [H|T]) when Current < To+3 ->
+  Next = get_preview(From, To, Current+1, T),
+  <<H/binary, "\n", Next/binary>>;
+get_preview(_From, _To, _Current, _) -> <<"\n">>.
+
 
 
 -spec apply_edit(workspaceEdit()) -> ok.
@@ -292,5 +314,6 @@ text_edit(Text) -> #{
   range =>
     #{ start => #{ line => 0, character => 0},
       'end' => #{ line => length(binary:split(Text, <<"\n">>, [global])), character => 0}
+      %% TODO the original file can be longer
     },
   newText => els_utils:to_binary(Text)}.
