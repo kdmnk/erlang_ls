@@ -41,7 +41,7 @@
 %% Type Definitions
 %%==============================================================================
 -type id()   :: atom().
--type kind() :: module | header | other.
+-type kind() :: module | header | refactor_form | other.
 
 %%==============================================================================
 %% Item Definition
@@ -134,6 +134,8 @@ new(Uri, Text) ->
       new(Uri, Text, Id, module);
     <<".hrl">> ->
       new(Uri, Text, Id, header);
+    <<".twf">> ->
+      new(Uri, Text, Id, refactor_form);
     _  ->
       new(Uri, Text, Id, other)
   end.

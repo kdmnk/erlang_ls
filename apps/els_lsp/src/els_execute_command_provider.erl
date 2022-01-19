@@ -33,12 +33,12 @@ options() ->
                  , els_command:with_prefix(<<"move-fun">>)
                  , els_command:with_prefix(<<"comment-out-spec">>)
                  , els_command:with_prefix(<<"generalise-fun">>)
-<<<<<<< HEAD
                  , els_command:with_prefix(<<"new-var">>)
                  , els_command:with_prefix(<<"new-macro">>)
-=======
+                 , els_command:with_prefix(<<"refactor-form-select-all">>)
+                 , els_command:with_prefix(<<"refactor-form-select-some">>)
+                 , els_command:with_prefix(<<"refactor-form-exit">>)
                  , els_command:with_prefix(<<"fold">>)
->>>>>>> basics of folding
                  ] }.
 
 -spec handle_request(any(), state()) -> {any(), state()}.
@@ -68,11 +68,7 @@ execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path, NewMod]) ->
       },
       apply_edit(Edit);
     {error, Err} ->
-<<<<<<< HEAD
       ?LOG_INFO("Error renaming fun: ~p", [Err])
-=======
-      ?LOG_INFO("Error renaming fun: ~p", Err)
->>>>>>> basics of folding
   end,
   [];
 
@@ -90,7 +86,6 @@ execute_command(<<"rename-mod">>, [Mod, Path, NewMod]) ->
       },
       apply_edit(Edit);
     {error, Err} ->
-<<<<<<< HEAD
       ?LOG_INFO("Error renaming mod: ~p", [Err])
   end,
   [];
@@ -110,9 +105,6 @@ execute_command(<<"copy-mod">>, [Mod, Path, NewMod]) ->
       apply_edit(Edit);
     {error, Err} ->
       ?LOG_INFO("Error renaming mod: ~p", [Err])
-=======
-      ?LOG_INFO("Error renaming mod: ~p", Err)
->>>>>>> basics of folding
   end,
   [];
 
@@ -127,7 +119,6 @@ execute_command(<<"extract-fun">>, [Path, StartLine, StartCol, EndLine, EndCol, 
       },
       apply_edit(Edit);
     {error, Err} ->
-<<<<<<< HEAD
       ?LOG_INFO("Error extracting fun: ~p", [Err])
   end,
   [];
@@ -144,9 +135,6 @@ execute_command(<<"new-macro">>, [Path, StartLine, StartCol, EndLine, EndCol, Ne
       apply_edit(Edit);
     {error, Err} ->
       ?LOG_INFO("Error new macro: ~p", [Err])
-=======
-      ?LOG_INFO("Error extracting fun: ~p", Err)
->>>>>>> basics of folding
   end,
   [];
 
@@ -259,7 +247,7 @@ execute_command(Command, Arguments) ->
 preview_candidate({{{StartLine, StartCol}, {EndLine, EndCol}}, _IDK1, _IDK2}, Lines) ->
   Preview = get_preview(StartLine, EndLine, 1, Lines),
   Header = list_to_binary(lists:concat([StartLine, ",", StartCol, "-", EndLine, ",", EndCol, "\n"])),
-  <<"%!fold:fun_to_fold/0:", Header/binary, Preview/binary>>.
+  <<"\n%!fold:fun_to_fold/0:", Header/binary, Preview/binary>>.
 
 get_preview(From, To, Current, [<<>>|T]) ->
   get_preview(From, To, Current+1, T);
@@ -268,7 +256,7 @@ get_preview(From, To, Current, [_|T]) when Current < From-2 ->
 get_preview(From, To, Current, [H|T]) when Current < To+3 ->
   Next = get_preview(From, To, Current+1, T),
   <<H/binary, "\n", Next/binary>>;
-get_preview(_From, _To, _Current, _) -> <<"\n">>.
+get_preview(_From, _To, _Current, _) -> <<>>.
 
 
 

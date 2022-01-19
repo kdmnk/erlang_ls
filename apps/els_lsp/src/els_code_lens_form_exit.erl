@@ -1,6 +1,7 @@
--module(els_code_lens_comment_out_spec).
+-module(els_code_lens_form_exit).
 
 -behaviour(els_code_lens).
+
 -export([command/3
          ,is_default/0
          ,pois/1
@@ -12,10 +13,10 @@
                  els_command:command().
 command(Document, _POI, _State) ->
   Title = title(),
-  CommandId = <<"comment-out-spec">>,
+  CommandId = <<"refactor-form-exit">>,
   #{uri := Uri} = Document,
-  P = els_uri:path(Uri),
-  els_command:make_command(Title, CommandId, [P]).
+  Path = els_uri:path(Uri),
+  els_command:make_command(Title, CommandId, [Path]).
 
 -spec is_default() -> boolean().
 is_default() ->
@@ -25,10 +26,11 @@ is_default() ->
 pois(Document) ->
   #{kind := Kind} = Document,
   case Kind of
-    refactor_form -> [];
-    _ -> [els_poi:new(#{from => {1, 1}, to => {1, 1}}, dummy, dummy)]
+    refactor_form ->
+      [els_poi:new(#{from => {1, 2}, to => {1, 2}}, dummy, dummy)];
+    _ -> []
   end.
 
 -spec title() -> binary().
 title() ->
-  <<"Comment out spec">>.
+  <<"Exit">>.

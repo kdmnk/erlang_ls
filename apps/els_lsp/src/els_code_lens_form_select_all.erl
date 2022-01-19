@@ -1,6 +1,7 @@
--module(els_code_lens_comment_out_spec).
+-module(els_code_lens_form_select_all).
 
 -behaviour(els_code_lens).
+
 -export([command/3
          ,is_default/0
          ,pois/1
@@ -10,12 +11,13 @@
 
 -spec command(els_dt_document:item(), poi(), els_code_lens:state()) ->
                  els_command:command().
-command(Document, _POI, _State) ->
+command(Document, POI, _State) ->
   Title = title(),
-  CommandId = <<"comment-out-spec">>,
+  CommandId = <<"refactor-form-select-all">>,
   #{uri := Uri} = Document,
-  P = els_uri:path(Uri),
-  els_command:make_command(Title, CommandId, [P]).
+  Path = els_uri:path(Uri),
+  %#{command := Command, function := {Function, Arity}} = POI,
+  els_command:make_command(Title, CommandId, [Path, <<"fold">>, <<"fun_to_fold">>, 0]).
 
 -spec is_default() -> boolean().
 is_default() ->
@@ -25,10 +27,11 @@ is_default() ->
 pois(Document) ->
   #{kind := Kind} = Document,
   case Kind of
-    refactor_form -> [];
-    _ -> [els_poi:new(#{from => {1, 1}, to => {1, 1}}, dummy, dummy)]
+    refactor_form ->
+      [els_poi:new(#{from => {1, 1}, to => {1, 1}}, dummy, dummy)]; %#{command => <<"fold">>, function => {fun_to_fold, 0}})];
+    _ -> []
   end.
 
 -spec title() -> binary().
 title() ->
-  <<"Comment out spec">>.
+  <<"Refactor all">>.
