@@ -34,6 +34,7 @@ options() ->
                  , els_command:with_prefix(<<"comment-out-spec">>)
                  , els_command:with_prefix(<<"generalise-fun">>)
                  , els_command:with_prefix(<<"new-var">>)
+                 , els_command:with_prefix(<<"new-macro">>)
                  ] }.
 
 -spec handle_request(any(), state()) -> {any(), state()}.
@@ -115,6 +116,21 @@ execute_command(<<"extract-fun">>, [Path, StartLine, StartCol, EndLine, EndCol, 
       apply_edit(Edit);
     {error, Err} ->
       ?LOG_INFO("Error extracting fun: ~p", [Err])
+  end,
+  [];
+
+execute_command(<<"new-macro">>, [Path, StartLine, StartCol, EndLine, EndCol, NewName]) ->
+  Changes = refac_new_macro:new_macro(binary_to_list(Path), {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(NewName), [binary_to_list(Path)], wls, 4),
+  case Changes of
+    {ok, [{OldName, _NewPath, Text}]} ->
+      Edit = #{
+        changes => #{
+          els_uri:uri(list_to_binary(OldName)) => [text_edit(Text)]
+        }
+      },
+      apply_edit(Edit);
+    {error, Err} ->
+      ?LOG_INFO("Error new macro: ~p", [Err])
   end,
   [];
 

@@ -50,6 +50,7 @@
 available_actions() ->
   [ <<"rename_fun">>
   , <<"new_var">>
+  , <<"new_macro">>
   , <<"extract_fun">>
   , <<"generalise_fun">>
   ].
