@@ -103,11 +103,11 @@ set(transport, _Transport) ->
   ok;
 set(log_dir, Dir) ->
   application:set_env(els_core, log_dir, Dir);
-set(wrangler_dir, "undefined") -> ?LOG_INFO("wrangler path not specified");
+set(wrangler_dir, "undefined") -> file:write_file("wrangler.log", <<"Wrangler path undefined">>);
 set(wrangler_dir, Dir) ->
   case code:add_path(Dir) of
-    true -> ?LOG_INFO("Wrangler path successfully added");
-    {error, bad_directory} -> ?LOG_INFO("~p is not a directory.", [Dir])
+    true -> file:write_file("wrangler.log", <<"Wrangler path set successfully.">>);
+    _ -> file:write_file("wrangler.log", <<"Wrangler path error">>)
   end;
 set(log_level, Level) ->
   application:set_env(els_core, log_level, list_to_atom(Level));
