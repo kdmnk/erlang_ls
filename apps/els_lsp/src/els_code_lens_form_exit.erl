@@ -24,9 +24,12 @@ is_default() ->
 
 -spec pois(els_dt_document:item()) -> [poi()].
 pois(Document) ->
-  #{kind := Kind} = Document,
-  case Kind of
-    refactor_form ->
+  #{uri := Uri} = Document,
+  Path = els_uri:path(Uri),
+  {ok, Text} = file:read_file(Path),
+  Lines = binary:split(Text, <<"\n">>, [global]),
+  case Lines of
+    [<<"%!wrangler io form">>|L] ->
       [els_poi:new(#{from => {1, 2}, to => {1, 2}}, dummy, dummy)];
     _ -> []
   end.
