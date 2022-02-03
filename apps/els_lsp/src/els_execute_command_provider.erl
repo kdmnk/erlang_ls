@@ -204,21 +204,11 @@ execute_command(<<"fold">>, [Path, StartLine, StartCol, _EndLine, _EndCol]) ->
         Candidates ->
           TemporaryFile = binary_to_list(Path) ++ ".twf",
           OriginalFile = binary_to_list(Path),
-          Form = ["%!wrangler io form\n%!fold:fun_to_fold/0\n"] ++ [preview_candidate(C, Lines) || C <- Candidates],
+          Form = ["%!wrangler io form\n%!fold:fun_to_fold/0\n"] ++ [preview_candidates(Candidates, Lines, 1)],
           ?LOG_INFO("Form: ~p", [Form]),
           file:copy(OriginalFile, TemporaryFile),
           file:write_file(OriginalFile, erlang:iolist_to_binary(Form))
-          % Edit = #{
-          %   documentChanges => [
-          %     rename_file(OriginalFile, TemporaryFile), %% Temporary file will be in focus
-          %     create_file(OriginalFile), %% Recreate the original file
-          %     text_document_edit(OriginalFile, OriginalText), %% Copy the original file content
-          %     text_document_edit(TemporaryFile, erlang:iolist_to_binary(Form)) %% Fill the temporary file with the form
-          %   ]
-          % },
-          % apply_edit(Edit)
       end;
-
     _ -> ?LOG_INFO("Error")
   end,
   [];
@@ -246,22 +236,48 @@ execute_command(Command, Arguments) ->
 -type renameFile() :: #{'kind':=refactor_type(),  'newUri':=uri(),  'oldUri':=uri()}.
 
 
-preview_candidate({{{StartLine, StartCol}, {EndLine, EndCol}}, _IDK1, _IDK2}, Lines) ->
-  Preview = get_preview(StartLine, EndLine, 1, Lines),
-  Header = list_to_binary(lists:concat([StartLine, ",", StartCol, "-", EndLine, ",", EndCol, "\n"])),
-  <<"\n%!", Header/binary, Preview/binary>>.
+preview_candidates([{{{StartLine, StartCol}, {EndLine, EndCol}}, _IDK1, _IDK2} | _Tail] = Candidate, [Line | Lines], LineNum) when LineNum < StartLine ->
+  Next = preview_candidates(Candidate, Lines, LineNum + 1),
+  <<Line/binary, "\n", Next/binary>>;
 
-get_preview(From, To, Current, [<<>>|T]) ->
-  get_preview(From, To, Current+1, T);
-get_preview(From, To, Current, [_|T]) when Current < From-2 ->
-  get_preview(From, To, Current+1, T);
-get_preview(From, To, Current, [H|T]) when Current == From ->
-  Next = get_preview(From, To, Current+1, T),
-  <<"%-> ", H/binary, "\n", Next/binary>>;
-get_preview(From, To, Current, [H|T]) when Current < To+3 ->
-  Next = get_preview(From, To, Current+1, T),
-  <<"%%% ", H/binary, "\n", Next/binary>>;
-get_preview(_From, _To, _Current, _) -> <<>>.
+preview_candidates([{{{StartLine, StartCol}, {EndLine, EndCol}}, _IDK1, _IDK2} | _Tail] = Candidate, [Line | Lines], LineNum) when LineNum == StartLine ->
+  Next = preview_candidates(Candidate, Lines, LineNum + 1),
+  <<"%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n", " ", Line/binary, "\n", Next/binary>>;
+
+preview_candidates([{{{StartLine, StartCol}, {EndLine, EndCol}}, _IDK1, _IDK2} | _Tail] = Candidate, [Line | Lines], LineNum) when LineNum < EndLine + 1 ->
+  Next = preview_candidates(Candidate, Lines, LineNum + 1),
+  <<Line/binary, "\n", Next/binary>>;
+
+preview_candidates([{{{StartLine, StartCol}, {EndLine, EndCol}}, _IDK1, _IDK2} | Tail], [Line | Lines], LineNum) when LineNum == EndLine + 1 ->
+  Next = preview_candidates(Tail, Lines, LineNum + 1),
+  <<"%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n", Line/binary, "\n", Next/binary>>;
+
+preview_candidates([{{{StartLine, StartCol}, {EndLine, EndCol}}, _IDK1, _IDK2} | _Tail] = Candidate, [Line | Lines], LineNum) ->
+  Next = preview_candidates(Candidate, Lines, LineNum + 1),
+  <<"?", Line/binary, "\n", Next/binary>>;
+
+
+preview_candidates([], [Line | Lines], LineNum) ->
+  Next = preview_candidates([], Lines, LineNum+1),
+  <<Line/binary, "\n", Next/binary>>;
+preview_candidates(_, [], _) ->
+  <<"">>.
+
+%   Preview = get_preview(StartLine, EndLine, 1, Lines),
+%   Header = list_to_binary(lists:concat([StartLine, ",", StartCol, "-", EndLine, ",", EndCol, "\n"])),
+%   <<"\n%!", Header/binary, Preview/binary>>.
+
+% get_preview(From, To, Current, [<<>>|T]) ->
+%   get_preview(From, To, Current+1, T);
+% get_preview(From, To, Current, [_|T]) when Current < From-2 ->
+%   get_preview(From, To, Current+1, T);
+% get_preview(From, To, Current, [H|T]) when Current == From ->
+%   Next = get_preview(From, To, Current+1, T),
+%   <<"%-> ", H/binary, "\n", Next/binary>>;
+% get_preview(From, To, Current, [H|T]) when Current < To+3 ->
+%   Next = get_preview(From, To, Current+1, T),
+%   <<"%%% ", H/binary, "\n", Next/binary>>;
+% get_preview(_From, _To, _Current, _) -> <<>>.
 
 
 

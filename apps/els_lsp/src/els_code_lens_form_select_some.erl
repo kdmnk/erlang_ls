@@ -34,6 +34,16 @@ pois(Document) ->
   case Lines of
     [<<"%!wrangler io form">>|L] ->
       [<<"%!", Fun/binary>>|Form] = L,
+      {ok, {AnnAST, _Info}} = wrangler_ast_server:parse_annotate_file(binary_to_list(Path), true),
+      case refac_fold_expression:pos_to_fun_clause(AnnAST, {StartLine, StartCol}) of
+        {ok, {Mod, FunName, Arity, FunClauseDef, _ClauseIndex}} ->
+          Candidates = refac_fold_expression:search_candidate_exprs(AnnAST, {Mod, Mod}, FunName, FunClauseDef),
+          ?LOG_INFO("Candidates: ~p ", [Candidates]),
+          {ok, OriginalText} = file:read_file(Path),
+          Lines = binary:split(OriginalText, <<"\n">>, [global]),
+          case Candidates of
+            [] -> ok;
+            Candidates ->
       ?LOG_INFO("Fun: ~p", [Fun]),
       POIs = getPois(Form, 4),
       ?LOG_INFO("POIs: ~p", [POIs]),

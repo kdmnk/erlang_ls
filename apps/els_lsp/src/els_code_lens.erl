@@ -57,14 +57,11 @@
 -spec available_lenses() -> [lens_id()].
 available_lenses() ->
   [ <<"rename-mod">>
-<<<<<<< HEAD
   , <<"copy-mod">>
   , <<"move-fun">>
-=======
   , <<"form_select_all">>
   , <<"form_select_some">>
   , <<"form_exit">>
->>>>>>> form code lens
   , <<"comment-out-spec">> ].
 
 -spec default_lenses() -> [lens_id()].

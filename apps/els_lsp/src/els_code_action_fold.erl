@@ -34,8 +34,8 @@ is_default() ->
 precondition(Path, Range) ->
   {{Line, Col}, _EndPos} = wls_utils:range(Range),
   {ok, {AnnAST, _Info}} = wrangler_ast_server:parse_annotate_file(binary_to_list(Path), true),
-    case refac_fold_expression:pos_to_fun_clause(AnnAST, {Line, Col}) of
-      {ok, _} -> true;
-      _ ->false
+  case refac_fold_expression:pos_to_fun_clause(AnnAST, {Line, Col}) of
+    {ok, _} -> true;
+    _ ->false
   end.
 
