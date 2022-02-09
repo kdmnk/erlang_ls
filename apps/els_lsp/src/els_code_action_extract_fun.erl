@@ -2,7 +2,7 @@
 
 
 -behaviour(els_code_actions).
--export([ command/2
+-export([ command/3
         , precondition/2
         , is_default/0
         ]).
@@ -12,16 +12,16 @@
 
 %% init(path()) -> state()
 
--spec command(wls_utils:path(), range()) -> map().
-command(Path, Range) ->
-  {{StartLine, StartCol}, {EndLine, EndCol}} = wls_utils:range(Range),
+-spec command(uri(), range(), any()) -> map().
+command(Uri, Range, _State) ->
   #{title => <<"Extract function">>,
     kind => ?CODE_ACTION_KIND_REFACTOR,
     command =>
       els_command:make_command(
         <<"Extract function">>,
         <<"extract-fun">>,
-        [Path, StartLine, StartCol, EndLine, EndCol]
+        [#{ <<"uri">>   => Uri
+          , <<"range">> => Range}]
       )
     }.
 
@@ -30,13 +30,16 @@ is_default() ->
   true.
 
 
--spec precondition(wls_utils:path(), range()) -> boolean().
-precondition(Path, Range) ->
+-spec precondition(uri(), range()) -> boolean().
+precondition(Uri, Range) ->
+  Path = binary_to_list(els_uri:path(Uri)),
+  % convert the range representation
   {StartPos, EndPos} = wls_utils:range(Range),
-  {ok, {AnnAST, _Info}} = wrangler_ast_server:parse_annotate_file(binary_to_list(Path), true),
+  % create an annotated syntax tree
+  {ok, {AnnAST, _Info}} = wrangler_ast_server:parse_annotate_file(Path, true),
+  % check if the highlighted range is list of expressions
   case api_interface:pos_to_expr_list(AnnAST, StartPos, EndPos) of
-    [] -> false;
-    _ExpList ->
-      true
+    []       -> false;
+    _ExpList -> true
   end.
 

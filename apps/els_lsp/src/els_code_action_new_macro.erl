@@ -26,7 +26,7 @@ command(Path, Range) ->
 
 -spec is_default() -> boolean().
 is_default() ->
-  true.
+  false.
 
 
 -spec precondition(wls_utils:path(), range()) -> boolean().

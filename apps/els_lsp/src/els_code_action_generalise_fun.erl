@@ -27,7 +27,7 @@ command(Path, Range) ->
 
 -spec is_default() -> boolean().
 is_default() ->
-  true.
+  false.
 
 
 -spec precondition(wls_utils:path(), range()) -> boolean().
@@ -35,13 +35,13 @@ precondition(Path, Range) ->
   {StartPos, EndPos} = wls_utils:range(Range),
   {ok, {AnnAST, _Info}} = wrangler_ast_server:parse_annotate_file(binary_to_list(Path), true),
   case api_interface:pos_to_expr(AnnAST, StartPos, EndPos) of
-    {error, _} -> 
+    {error, _} ->
       false;
     _Exp -> true
       %% TODO ?
       % case api_interface:expr_to_fun(AnnAST, Exp) of
       %   {ok, _Fun} -> true;
-	    %   {error, _} -> 
+	    %   {error, _} ->
       %     ?LOG_INFO("Not in fun"),
       %     false
       % end

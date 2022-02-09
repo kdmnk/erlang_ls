@@ -104,16 +104,20 @@ execute_command(<<"copy-mod">>, [Mod, Path, NewMod]) ->
   end,
   [];
 
-execute_command(<<"extract-fun">>, [Path, StartLine, StartCol, EndLine, EndCol, NewName]) ->
-  Changes = refac_new_fun:fun_extraction(binary_to_list(Path), {StartLine, StartCol}, {EndLine, EndCol}, binary_to_list(NewName), wls, 4),
+execute_command(<<"extract-fun">>, [#{ <<"uri">>  := Uri
+                                     , <<"range">> := Range}
+                                    , NewName]) ->
+  Path = binary_to_list(els_uri:path(Uri)),
+  {Start, End} = wls_utils:range(Range), % convert to wrangler representation
+  Changes = refac_new_fun:fun_extraction(Path, Start, End, binary_to_list(NewName), wls, 4),
   case Changes of
-    {ok, [{OldName, _NewPath, Text}]} ->
+    {ok, [{OldPath, _NewPath, Text}]} ->
       Edit = #{
-        changes => #{
-          els_uri:uri(list_to_binary(OldName)) => [text_edit(Text)]
-        }
+        documentChanges => [
+          text_document_edit(OldPath, Text)
+        ]
       },
-      apply_edit(Edit);
+      apply_edit(Edit); %% send applyEdit request
     {error, Err} ->
       ?LOG_INFO("Error extracting fun: ~p", [Err])
   end,

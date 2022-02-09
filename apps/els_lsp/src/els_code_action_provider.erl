@@ -34,8 +34,7 @@ handle_request({document_codeaction, Params}, State) ->
 %% @doc Result: `(Command | CodeAction)[] | null'
 -spec code_actions(uri(), range(), code_action_context()) -> [map()].
 code_actions(Uri, Range, _Context) ->
-  Path = els_uri:path(Uri),
-  Actions = filter([els_code_actions:actions(Id, Path, Range) || Id <- els_code_actions:enabled_actions()]),
+  Actions = filter([els_code_actions:actions(Id, Uri, Range) || Id <- els_code_actions:enabled_actions()]),
   case Actions of
     [] -> null;
     A -> A

@@ -3,23 +3,19 @@
 %%==============================================================================
 
 -module(els_code_actions).
-
 %%==============================================================================
 %% Callback Functions
 %%==============================================================================
-
--callback init(path()) -> state(). %% TODO store AST?
--callback command(path(), range()) -> map().
+-callback init(path()) -> state().
+-callback command(path(), range(), any()) -> map().
 -callback is_default() -> boolean().
 -callback precondition(path(), range()) -> boolean().
 -optional_callbacks([ init/1
                     , precondition/2
                     ]).
-
 %%==============================================================================
 %% API
 %%==============================================================================
-
 -export([ available_actions/0
         , default_actions/0
         , enabled_actions/0
@@ -69,18 +65,18 @@ enabled_actions() ->
   %lists:usort((Default ++ valid(Enabled)) -- valid(Disabled)).
   default_actions().
 
--spec actions(action_id(), path(), range()) ->  [action_id()].
-actions(Id, Path, Range) ->
+-spec actions(action_id(), uri(), range()) ->  [action_id()].
+actions(Id, Uri, Range) ->
   CbModule = cb_module(Id),
-  case precondition(CbModule, Path, Range) of
+  case precondition(CbModule, Uri, Range) of
     true ->
-      % State = case erlang:function_exported(CbModule, init, 1) of
-      %           true ->
-      %             CbModule:init(Path, Range);
-      %           false ->
-      %             'state_not_initialized'
-      %         end,
-      CbModule:command(Path, Range);
+      State = case erlang:function_exported(CbModule, init, 1) of
+                true ->
+                  CbModule:init(Uri, Range);
+                false ->
+                  'state_not_initialized'
+              end,
+      CbModule:command(Uri, Range, State);
     false ->
       null
   end.
