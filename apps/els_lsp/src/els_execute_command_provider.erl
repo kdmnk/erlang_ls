@@ -54,7 +54,17 @@ handle_request({workspace_executecommand, Params}, State) ->
 %%==============================================================================
 
 -spec execute_command(els_command:command_id(), [any()]) -> [map()].
-
+% execute_command(<<"replace-lines">>
+%                , [#{ <<"uri">>   := Uri
+%                    , <<"lines">> := Lines
+%                    , <<"from">>  := LineFrom
+%                    , <<"to">>    := LineTo }]) ->
+%   Method = <<"workspace/applyEdit">>,
+%   Params = #{ edit =>
+%                   els_text_edit:edit_replace_text(Uri, Lines, LineFrom, LineTo)
+%             },
+%   els_server:send_request(Method, Params),
+%   [];
 execute_command(<<"rename-fun">>, [Mod, Fun, Arity, Path, NewMod]) ->
   {module, _Module} = code:ensure_loaded(api_wrangler),
   ?LOG_INFO("Renaming fun... (~p, ~p, ~p, ~p, ~p)", [Mod, Fun, Arity, Path, NewMod]),
@@ -194,9 +204,10 @@ execute_command(<<"move-fun">>, [Module, _Path, Function, Arity, NewPath]) ->
 execute_command(<<"fold">>, [Path, StartLine, StartCol, _EndLine, _EndCol]) ->
   {ok, {AnnAST, _Info}} = wrangler_ast_server:parse_annotate_file(binary_to_list(Path), true),
   case refac_fold_expression:pos_to_fun_clause(AnnAST, {StartLine, StartCol}) of
-	  {ok, {Mod, FunName, Arity, FunClauseDef, _ClauseIndex}} ->
+	  {ok, {Mod, FunName, Arity, FunClauseDef, ClauseIndex}} ->
+      ?LOG_INFO("FunClauseDef (command): ~w", [FunClauseDef]),
 	    Candidates = refac_fold_expression:search_candidate_exprs(AnnAST, {Mod, Mod}, FunName, FunClauseDef),
-      ?LOG_INFO("Candidates: ~p ", [Candidates]),
+      %?LOG_INFO("Candidates: ~p ", [Candidates]),
       {ok, OriginalText} = file:read_file(Path),
       Lines = binary:split(OriginalText, <<"\n">>, [global]),
       case Candidates of
@@ -204,13 +215,22 @@ execute_command(<<"fold">>, [Path, StartLine, StartCol, _EndLine, _EndCol]) ->
         Candidates ->
           TemporaryFile = binary_to_list(Path) ++ ".twf",
           OriginalFile = binary_to_list(Path),
-          Form = ["%!wrangler io form\n%!fold:fun_to_fold/0\n"] ++ [preview_candidates(Candidates, Lines, 1)],
-          ?LOG_INFO("Form: ~p", [Form]),
+          Form = ["%!wrangler io form\n%!fold:", atom_to_list(FunName), "/", integer_to_list(Arity), "/", integer_to_list(ClauseIndex) ,"\n"] ++ [preview_candidates(Candidates, Lines, 1)],
+          %?LOG_INFO("Form: ~p", [Form]),
           file:copy(OriginalFile, TemporaryFile),
           file:write_file(OriginalFile, erlang:iolist_to_binary(Form))
       end;
     _ -> ?LOG_INFO("Error")
   end,
+  [];
+
+execute_command(<<"refactor-form-select-some">>
+                , [#{ <<"path">>  := Path
+                    , <<"refactor">> := _Refactor
+                    , <<"annAST">> := AnnAST
+                    , <<"candidateToFold">> := Candidate}]) ->
+  Results = refac_fold_expression:fold_candidate(AnnAST, Candidate, Path, wls, 4, todo),
+  ?LOG_INFO("Results: ~p", [Results]),
   [];
 
 execute_command(<<"comment-out-spec">>, [Path]) ->
@@ -242,7 +262,7 @@ preview_candidates([{{{StartLine, StartCol}, {EndLine, EndCol}}, _IDK1, _IDK2} |
 
 preview_candidates([{{{StartLine, StartCol}, {EndLine, EndCol}}, _IDK1, _IDK2} | _Tail] = Candidate, [Line | Lines], LineNum) when LineNum == StartLine ->
   Next = preview_candidates(Candidate, Lines, LineNum + 1),
-  <<"%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n", " ", Line/binary, "\n", Next/binary>>;
+  <<"%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n", Line/binary, "\n", Next/binary>>;
 
 preview_candidates([{{{StartLine, StartCol}, {EndLine, EndCol}}, _IDK1, _IDK2} | _Tail] = Candidate, [Line | Lines], LineNum) when LineNum < EndLine + 1 ->
   Next = preview_candidates(Candidate, Lines, LineNum + 1),
@@ -256,28 +276,11 @@ preview_candidates([{{{StartLine, StartCol}, {EndLine, EndCol}}, _IDK1, _IDK2} |
   Next = preview_candidates(Candidate, Lines, LineNum + 1),
   <<"?", Line/binary, "\n", Next/binary>>;
 
-
 preview_candidates([], [Line | Lines], LineNum) ->
   Next = preview_candidates([], Lines, LineNum+1),
   <<Line/binary, "\n", Next/binary>>;
 preview_candidates(_, [], _) ->
   <<"">>.
-
-%   Preview = get_preview(StartLine, EndLine, 1, Lines),
-%   Header = list_to_binary(lists:concat([StartLine, ",", StartCol, "-", EndLine, ",", EndCol, "\n"])),
-%   <<"\n%!", Header/binary, Preview/binary>>.
-
-% get_preview(From, To, Current, [<<>>|T]) ->
-%   get_preview(From, To, Current+1, T);
-% get_preview(From, To, Current, [_|T]) when Current < From-2 ->
-%   get_preview(From, To, Current+1, T);
-% get_preview(From, To, Current, [H|T]) when Current == From ->
-%   Next = get_preview(From, To, Current+1, T),
-%   <<"%-> ", H/binary, "\n", Next/binary>>;
-% get_preview(From, To, Current, [H|T]) when Current < To+3 ->
-%   Next = get_preview(From, To, Current+1, T),
-%   <<"%%% ", H/binary, "\n", Next/binary>>;
-% get_preview(_From, _To, _Current, _) -> <<>>.
 
 
 
