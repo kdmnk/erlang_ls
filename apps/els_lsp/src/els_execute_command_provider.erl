@@ -226,9 +226,9 @@ execute_command(<<"fold">>, [Path, StartLine, StartCol, _EndLine, _EndCol]) ->
 
 execute_command(<<"refactor-form-select-some">>
                 , [#{ <<"path">>  := Path
-                    , <<"refactor">> := _Refactor
-                    , <<"annAST">> := AnnAST
-                    , <<"candidateToFold">> := Candidate}]) ->
+                    , <<"refactor">> := fold
+                    , <<"ann_ast">> := AnnAST
+                    , <<"candidate">> := Candidate}]) ->
   Results = refac_fold_expression:fold_candidate(AnnAST, Candidate, Path, wls, 4, todo),
   ?LOG_INFO("Results: ~p", [Results]),
   [];
