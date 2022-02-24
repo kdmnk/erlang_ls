@@ -24,12 +24,17 @@ is_enabled() -> true.
 
 -spec options() -> map().
 options() ->
-  #{ commands => [ els_command:with_prefix(<<"server-info">>)
-                 , els_command:with_prefix(<<"ct-run-test">>)
-                 , els_command:with_prefix(<<"show-behaviour-usages">>)
-                 , els_command:with_prefix(<<"suggest-spec">>)
-                 , els_command:with_prefix(<<"function-references">>)
-                 ] }.
+  Commands = [ <<"server-info">>
+             , <<"ct-run-test">>
+             , <<"show-behaviour-usages">>
+             , <<"suggest-spec">>
+             , <<"function-references">>
+             ],
+  Commands2 = case application:get_env(els_core, wrangler_enabled) of
+    {ok, true} -> Commands ++ wls_execute_command_provider:enabled_commands();
+    _ -> Commands
+  end,
+  #{ commands => [ els_command:with_prefix(Cmd) || Cmd <- Commands2 ] }.
 
 -spec handle_request(any(), state()) -> {any(), state()}.
 handle_request({workspace_executecommand, Params}, State) ->
@@ -99,6 +104,12 @@ execute_command(<<"suggest-spec">>, [#{ <<"uri">> := Uri
   els_server:send_request(Method, Params),
   [];
 execute_command(Command, Arguments) ->
-  ?LOG_INFO("Unsupported command: [Command=~p] [Arguments=~p]"
-           , [Command, Arguments]),
+  case application:get_env(els_core, wrangler_enabled) of
+    {ok, true} ->
+      case lists:member(Command, wls_execute_command_provider:enabled_commands()) of
+        true -> wls_execute_command_provider:execute_command(Command, Arguments);
+        false -> ?LOG_INFO("Unsupported command: [Command=~p] [Arguments=~p]", [Command, Arguments])
+      end;
+    _ -> ?LOG_INFO("Unsupported command: [Command=~p] [Arguments=~p]", [Command, Arguments])
+  end,
   [].

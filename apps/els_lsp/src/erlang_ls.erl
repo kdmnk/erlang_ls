@@ -66,6 +66,18 @@ opt_spec_list() ->
     , {string, "stdio"}
     , "DEPRECATED. Only the \"stdio\" transport is currently supported."
     }
+  , { wrangler_enabled
+    , $e
+    , "wrangler-enabled"
+    , {boolean, true}
+    , "Whether Wrangler refactoring tool is enabled."
+    }
+  , { wrangler_dir
+    , $w
+    , "wrangler-dir"
+    , {string, "undefined"}
+    , "Directory where the wrangler ebin executables are."
+    }
  ,  { log_dir
     , $d
     , "log-dir"
@@ -96,8 +108,21 @@ set(log_dir, Dir) ->
 set(log_level, Level) ->
   application:set_env(els_core, log_level, list_to_atom(Level));
 set(port_old, Port) ->
-  application:set_env(els_core, port, Port).
-
+  application:set_env(els_core, port, Port);
+set(wrangler_enabled, Opt) ->
+  application:set_env(els_core, wrangler_enabled, Opt);
+set(wrangler_dir, "undefined") -> ok;
+set(wrangler_dir, Dir) ->
+  %%TODO can't log since logging is not configured yet
+  true = code:add_path(Dir),
+  case application:load(wrangler) of
+    ok -> ok;
+    {error, _Reason} -> ok
+  end,
+  case api_wrangler:start() of
+    ok -> ok;
+    {error, _Error} -> ok
+end.
 %%==============================================================================
 %% Logger configuration
 %%==============================================================================
