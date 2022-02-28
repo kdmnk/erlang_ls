@@ -69,8 +69,8 @@ opt_spec_list() ->
   , { wrangler_enabled
     , $e
     , "wrangler-enabled"
-    , {boolean, true}
-    , "Whether Wrangler refactoring tool is enabled."
+    , {boolean, false}
+    , "Whether the Wrangler refactoring tool is enabled."
     }
   , { wrangler_dir
     , $w
@@ -113,16 +113,20 @@ set(wrangler_enabled, Opt) ->
   application:set_env(els_core, wrangler_enabled, Opt);
 set(wrangler_dir, "undefined") -> ok;
 set(wrangler_dir, Dir) ->
-  %%TODO can't log since logging is not configured yet
-  true = code:add_path(Dir),
-  case application:load(wrangler) of
-    ok -> ok;
-    {error, _Reason} -> ok
-  end,
-  case api_wrangler:start() of
-    ok -> ok;
-    {error, _Error} -> ok
-end.
+  %% FIXME can't log since logging is not configured yet
+  case code:add_path(Dir) of
+    true ->
+      case application:load(wrangler) of
+        ok ->
+          case api_wrangler:start() of
+            ok -> ok;
+            {error, _Error} -> nok %% TODO log
+          end;
+        {error, _Reason} -> nok %% TODO log
+      end;
+    {error, bad_directory} -> nok %% TODO log
+  end.
+
 %%==============================================================================
 %% Logger configuration
 %%==============================================================================
