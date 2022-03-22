@@ -169,6 +169,14 @@ server_capabilities() ->
             els_rename_provider:is_enabled()
         , callHierarchyProvider =>
             els_call_hierarchy_provider:is_enabled()
+        , semanticTokensProvider =>
+            #{ legend =>
+                #{ tokenTypes => wls_semantic_tokens:token_types()
+                 , tokenModifiers => wls_semantic_tokens:token_modifiers()
+                 }
+             , range => false
+             , full  => true
+            }
         },
      serverInfo =>
        #{ name    => <<"Erlang LS">>

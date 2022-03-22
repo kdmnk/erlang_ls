@@ -27,6 +27,7 @@
         , textdocument_codeaction/2
         , textdocument_codelens/2
         , textdocument_rename/2
+        , textdocument_semantictokens_full/2
         , textdocument_preparecallhierarchy/2
         , callhierarchy_incomingcalls/2
         , callhierarchy_outgoingcalls/2
@@ -70,7 +71,6 @@ dispatch(<<"$/", Method/binary>>, Params, request, State) ->
   {error, Error, State};
 dispatch(Method, Params, _Type, State) ->
   Function = method_to_function_name(Method),
-  ?LOG_DEBUG("Dispatching request [method=~p] [params=~p]", [Method, Params]),
   try do_dispatch(Function, Params, State)
   catch
     error:undef ->
@@ -118,7 +118,7 @@ not_implemented_method(Method, State) ->
 method_to_function_name(<<"$/", Method/binary>>) ->
   method_to_function_name(<<"$_", Method/binary>>);
 method_to_function_name(Method) ->
-  Replaced = string:replace(Method, <<"/">>, <<"_">>),
+  Replaced = string:replace(Method, <<"/">>, <<"_">>, all),
   Lower    = string:lowercase(Replaced),
   Binary   = els_utils:to_binary(Lower),
   binary_to_atom(Binary, utf8).
@@ -381,6 +381,16 @@ textdocument_codelens(Params, State) ->
 textdocument_rename(Params, State) ->
   Provider = els_rename_provider,
   Response = els_provider:handle_request(Provider, {rename, Params}),
+  {response, Response, State}.
+
+%%==============================================================================
+%% textDocument/semanticTokens/full
+%%==============================================================================
+
+-spec textdocument_semantictokens_full(params(), state()) -> result().
+textdocument_semantictokens_full(Params, State) ->
+  Provider = els_semantic_token_provider,
+  Response = els_provider:handle_request(Provider, {semantic_tokens, Params}),
   {response, Response, State}.
 
 %%==============================================================================
