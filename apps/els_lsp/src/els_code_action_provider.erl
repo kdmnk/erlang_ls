@@ -32,8 +32,13 @@ handle_request({document_codeaction, Params}, State) ->
 %% @doc Result: `(Command | CodeAction)[] | null'
 -spec code_actions(uri(), range(), code_action_context()) -> [map()].
 code_actions(Uri, _Range, #{<<"diagnostics">> := Diagnostics}) ->
-  lists:flatten([make_code_action(Uri, D) || D <- Diagnostics]).
-
+  lists:flatten([make_code_action(Uri, D) || D <- Diagnostics]++ [
+    #{ title => <<"Test">>
+      , command => #{ title => <<"Test">>
+                    , command => <<"test-command">>
+                    , arguments => [1, {2,3}, 4] } %% [1, 2, 3, 4] ok
+      }
+  ] ).
 -spec make_code_action(uri(), map()) -> [map()].
 make_code_action(Uri,
   #{<<"message">> := Message, <<"range">> := Range} = D) ->
