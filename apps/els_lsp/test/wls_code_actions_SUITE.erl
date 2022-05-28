@@ -21,6 +21,7 @@
 -export([rename_fun/1]).
 -export([rename_var/1]).
 -export([fold_expression/1]).
+-export([empty/1]).
 
 %%==============================================================================
 %% Includes
@@ -98,6 +99,16 @@ generalise_fun_expression(Config) ->
       }
     ],
   ?assertEqual(Expected, FilteredResult),
+  ok.
+
+-spec empty(config()) ->  ok.
+empty(Config) ->
+  Uri = ?config(wls_uri, Config),
+  Range = els_protocol:range(#{from => {1, 1},
+                                to => {1, 1}}),
+  #{result := Result} = els_client:document_codeaction(Uri, Range, []),
+  Expected = [],
+  ?assertEqual(Expected, Result),
   ok.
 
 -spec introduce_new_var(config()) ->  ok.
